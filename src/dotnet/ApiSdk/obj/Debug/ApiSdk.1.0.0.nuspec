@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>ApiSdk</id>
+    <version>1.0.0</version>
+    <authors>API SDK Team</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <description>Cross-platform SDK that abstracts calls to both flat file storage (series of JSON files) and an OTA API</description>
+    <tags>api sdk ota json</tags>
+    <repository type="git" url="https://github.com/your-org/api-sdk" commit="283178ea2fcaa7a7a8ede65ffa9078ef71ccaa59" />
+    <dependencies>
+      <group targetFramework="net9.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\bin\Debug\net9.0\ApiSdk.dll" target="lib\net9.0\ApiSdk.dll" />
+  </files>
+</package>

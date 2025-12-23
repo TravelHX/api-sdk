@@ -1,0 +1,12 @@
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\bin\Debug\net9.0\ApiSdk.deps.json
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\bin\Debug\net9.0\ApiSdk.dll
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\bin\Debug\net9.0\ApiSdk.pdb
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.AssemblyInfoInputs.cache
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.AssemblyInfo.cs
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.csproj.CoreCompileInputs.cache
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.sourcelink.json
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.dll
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\refint\ApiSdk.dll
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ApiSdk.pdb
+C:\Users\H700125\source\repos\api-sdk\src\dotnet\ApiSdk\obj\Debug\net9.0\ref\ApiSdk.dll

@@ -1,0 +1,31 @@
+{
+  "name": "@api-sdk/js",
+  "version": "1.0.0",
+  "description": "Cross-platform SDK that abstracts calls to both flat file storage (series of JSON files) and an OTA API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "api",
+    "sdk",
+    "ota",
+    "json"
+  ],
+  "author": "API SDK Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/api-sdk.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
