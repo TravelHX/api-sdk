@@ -1,0 +1,3598 @@
+[
+  {
+    "code": "GB",
+    "description": "UNITED KINGDOM"
+  },
+  {
+    "code": "AAL",
+    "description": "AALBORG"
+  },
+  {
+    "code": "AB1",
+    "description": "AALBORG"
+  },
+  {
+    "code": "ÅBH",
+    "description": "Ålborgshavn"
+  },
+  {
+    "code": "ABZ",
+    "description": "ABERDEEN"
+  },
+  {
+    "code": "ACA",
+    "description": "ACAPULCO"
+  },
+  {
+    "code": "ACE",
+    "description": "ARRECIFE / LANZAROTE"
+  },
+  {
+    "code": "ACV",
+    "description": "EUREKA CA"
+  },
+  {
+    "code": "ADH",
+    "description": "ANGRA DO HEROISMO, AZORES"
+  },
+  {
+    "code": "ADQ",
+    "description": "KODIAK AK"
+  },
+  {
+    "code": "ADZ",
+    "description": "SAN ANDRES ISLAND"
+  },
+  {
+    "code": "AER",
+    "description": "SOCHI"
+  },
+  {
+    "code": "AES",
+    "description": "AALESUND"
+  },
+  {
+    "code": "AGA",
+    "description": "AGADIR"
+  },
+  {
+    "code": "AGP",
+    "description": "MALAGA"
+  },
+  {
+    "code": "AJA",
+    "description": "AJACCIO"
+  },
+  {
+    "code": "AKL",
+    "description": "AUCKLAND"
+  },
+  {
+    "code": "AKU",
+    "description": "Akureyri, ICELAND"
+  },
+  {
+    "code": "ALA",
+    "description": "ALMATY//ALMA ATA"
+  },
+  {
+    "code": "ALF",
+    "description": "ALTA"
+  },
+  {
+    "code": "ALY",
+    "description": "ALEXANDRIA"
+  },
+  {
+    "code": "AMS",
+    "description": "AMSTERDAM"
+  },
+  {
+    "code": "AND",
+    "description": "ÅNDALSNES"
+  },
+  {
+    "code": "ANF",
+    "description": "ANTOFAGASTA"
+  },
+  {
+    "code": "ANR",
+    "description": "ANTWERP"
+  },
+  {
+    "code": "ANU",
+    "description": "ANTIGUA"
+  },
+  {
+    "code": "ANX",
+    "description": "ANDENES"
+  },
+  {
+    "code": "AOQ",
+    "description": "AAPPILATTOQ"
+  },
+  {
+    "code": "APW",
+    "description": "APIA"
+  },
+  {
+    "code": "AQJ",
+    "description": "AQABA"
+  },
+  {
+    "code": "ARI",
+    "description": "ARICA, CHILE"
+  },
+  {
+    "code": "ARR",
+    "description": "ARRECIFE"
+  },
+  {
+    "code": "ART",
+    "description": "WATERTOWN NY"
+  },
+  {
+    "code": "ASH",
+    "description": "ASHFORD"
+  },
+  {
+    "code": "AST",
+    "description": "ASTORIA OR"
+  },
+  {
+    "code": "AT1",
+    "description": "ATLØY"
+  },
+  {
+    "code": "AVR",
+    "description": "Abelvær"
+  },
+  {
+    "code": "AYT",
+    "description": "ANTALYA"
+  },
+  {
+    "code": "BAR",
+    "description": "BARENTSBURG"
+  },
+  {
+    "code": "BAS",
+    "description": "BALALAE"
+  },
+  {
+    "code": "BB1",
+    "description": "BONNE BAY - NEWFOUNDLAND"
+  },
+  {
+    "code": "BB4",
+    "description": "BURGERBUKTA"
+  },
+  {
+    "code": "BCN",
+    "description": "BARCELONA"
+  },
+  {
+    "code": "BD1",
+    "description": "BADDECK"
+  },
+  {
+    "code": "BDA",
+    "description": "BERMUDA (HAMILTON)"
+  },
+  {
+    "code": "BE2",
+    "description": "BELVIEW"
+  },
+  {
+    "code": "BEI",
+    "description": "BELLE ILE"
+  },
+  {
+    "code": "BEL",
+    "description": "BELEM"
+  },
+  {
+    "code": "BES",
+    "description": "BREST"
+  },
+  {
+    "code": "BFS",
+    "description": "BELFAST"
+  },
+  {
+    "code": "BG6",
+    "description": "Bakkargerdi"
+  },
+  {
+    "code": "BGI",
+    "description": "BRIDGETOWN"
+  },
+  {
+    "code": "BGO",
+    "description": "BERGEN"
+  },
+  {
+    "code": "BH1",
+    "description": "Battle Harbour, Canada"
+  },
+  {
+    "code": "BHB",
+    "description": "BAR HARBOR ME"
+  },
+  {
+    "code": "BI1",
+    "description": "Belle Isle, Windermere, UK"
+  },
+  {
+    "code": "BIO",
+    "description": "BILBAO, SPAIN"
+  },
+  {
+    "code": "BIU",
+    "description": "Bildudalur"
+  },
+  {
+    "code": "BJ1",
+    "description": "BJARGTANGER"
+  },
+  {
+    "code": "BJF",
+    "description": "BATSFJORD"
+  },
+  {
+    "code": "BJY",
+    "description": "Bjarkøy"
+  },
+  {
+    "code": "BKA",
+    "description": "BYKOVO"
+  },
+  {
+    "code": "BKK",
+    "description": "BANGKOK"
+  },
+  {
+    "code": "BME",
+    "description": "BROOME  WA"
+  },
+  {
+    "code": "BMU",
+    "description": "BIMA"
+  },
+  {
+    "code": "BNE",
+    "description": "BRISBANE QL"
+  },
+  {
+    "code": "BNN",
+    "description": "BRONNOYSUND"
+  },
+  {
+    "code": "BOB",
+    "description": "BORA BORA"
+  },
+  {
+    "code": "BOC",
+    "description": "BOCAS DEL TORO"
+  },
+  {
+    "code": "BOD",
+    "description": "BORDEAUX"
+  },
+  {
+    "code": "BOO",
+    "description": "BODO"
+  },
+  {
+    "code": "BOS",
+    "description": "BOSTON MA"
+  },
+  {
+    "code": "BPO",
+    "description": "Bongrain Point"
+  },
+  {
+    "code": "BR1",
+    "description": "BRÆKSTAD"
+  },
+  {
+    "code": "BRV",
+    "description": "BREMERHAVEN"
+  },
+  {
+    "code": "BS1",
+    "description": "BALESTRAND"
+  },
+  {
+    "code": "BSB",
+    "description": "BRASILIA"
+  },
+  {
+    "code": "BT1",
+    "description": "Bucksport (Maine), USA"
+  },
+  {
+    "code": "BTJ",
+    "description": "BANDA ACEH"
+  },
+  {
+    "code": "BU0",
+    "description": "Bud, Norway"
+  },
+  {
+    "code": "BUE",
+    "description": "BUENOS AIRES"
+  },
+  {
+    "code": "BVG",
+    "description": "BERLEVAG"
+  },
+  {
+    "code": "BWI",
+    "description": "BALTIMORE MD"
+  },
+  {
+    "code": "BYS",
+    "description": "BYGSTAD"
+  },
+  {
+    "code": "BZE",
+    "description": "BELIZE CITY"
+  },
+  {
+    "code": "CAB",
+    "description": "CASABLANCA"
+  },
+  {
+    "code": "CAL",
+    "description": "CALETA TORTEL, CHILE"
+  },
+  {
+    "code": "CAN",
+    "description": "GUANGZHOU/CANTON"
+  },
+  {
+    "code": "CAP",
+    "description": "CAPE HORN, CHILE"
+  },
+  {
+    "code": "CAR",
+    "description": "Carcass"
+  },
+  {
+    "code": "CAS",
+    "description": "CASABLANCA"
+  },
+  {
+    "code": "CBB",
+    "description": "COCHABAMBA"
+  },
+  {
+    "code": "CBK",
+    "description": "CORNER BROOK"
+  },
+  {
+    "code": "CCF",
+    "description": "CARCASSONE"
+  },
+  {
+    "code": "CCP",
+    "description": "CONCEPCION"
+  },
+  {
+    "code": "CDF",
+    "description": "CARDIFF"
+  },
+  {
+    "code": "CDO",
+    "description": "CAPE DORSET"
+  },
+  {
+    "code": "CDV",
+    "description": "CORDOVA AK"
+  },
+  {
+    "code": "CEN",
+    "description": "CIUDAD OBREGON"
+  },
+  {
+    "code": "CER",
+    "description": "CHERBOURG"
+  },
+  {
+    "code": "CFS",
+    "description": "COFFS HARBOUR NSW"
+  },
+  {
+    "code": "CFU",
+    "description": "CORFU/KERKYRA"
+  },
+  {
+    "code": "CH1",
+    "description": "CHÉTICAMP"
+  },
+  {
+    "code": "CHC",
+    "description": "CHRISTCHURCH"
+  },
+  {
+    "code": "CHF",
+    "description": "Cape Hofmann Halvo"
+  },
+  {
+    "code": "CHS",
+    "description": "CHARLESTON SC"
+  },
+  {
+    "code": "CHT",
+    "description": "CHATHAM ISLAND"
+  },
+  {
+    "code": "CIP",
+    "description": "CHIPATA"
+  },
+  {
+    "code": "CLL",
+    "description": "CALLAO, PERU"
+  },
+  {
+    "code": "CLM",
+    "description": "PORT ANGELES WA"
+  },
+  {
+    "code": "CMA",
+    "description": "CUNNAMULLA QLD"
+  },
+  {
+    "code": "CND",
+    "description": "CONSTANTA"
+  },
+  {
+    "code": "CNP",
+    "description": "Ittoqqortoormiit"
+  },
+  {
+    "code": "CNR",
+    "description": "Chanaral"
+  },
+  {
+    "code": "CNS",
+    "description": "CAIRNS QL"
+  },
+  {
+    "code": "COB",
+    "description": "COBH"
+  },
+  {
+    "code": "COO",
+    "description": "COTONOU/PORTONO"
+  },
+  {
+    "code": "COR",
+    "description": "LA CORUNA"
+  },
+  {
+    "code": "CPH",
+    "description": "COPENHAGEN"
+  },
+  {
+    "code": "CPO",
+    "description": "COPIAPO"
+  },
+  {
+    "code": "CQF",
+    "description": "CALAIS"
+  },
+  {
+    "code": "CQQ",
+    "description": "Coquimbo"
+  },
+  {
+    "code": "CSG",
+    "description": "COLUMBUS GA"
+  },
+  {
+    "code": "CSL",
+    "description": "SAN LUIS OBISPO CA"
+  },
+  {
+    "code": "CT1",
+    "description": "Castine (Maine)"
+  },
+  {
+    "code": "CT2",
+    "description": "COCKBURN TOWN"
+  },
+  {
+    "code": "CTA",
+    "description": "CATANIA"
+  },
+  {
+    "code": "CTC",
+    "description": "CATAMARCA"
+  },
+  {
+    "code": "CTG",
+    "description": "CARTAGENA"
+  },
+  {
+    "code": "CUN",
+    "description": "CANCUN"
+  },
+  {
+    "code": "CUR",
+    "description": "CURACAO"
+  },
+  {
+    "code": "CUV",
+    "description": "Cuverville"
+  },
+  {
+    "code": "CXI",
+    "description": "CHRISTMAS ISLAND"
+  },
+  {
+    "code": "CZM",
+    "description": "COZUMEL"
+  },
+  {
+    "code": "DAD",
+    "description": "DA NANG"
+  },
+  {
+    "code": "DAV",
+    "description": "DAVID"
+  },
+  {
+    "code": "DB2",
+    "description": "DANEBORG"
+  },
+  {
+    "code": "DBV",
+    "description": "DUBROVNIK"
+  },
+  {
+    "code": "DEC",
+    "description": "DECATUR IL"
+  },
+  {
+    "code": "DEI",
+    "description": "Devil's Island"
+  },
+  {
+    "code": "DGO",
+    "description": "DURANGO"
+  },
+  {
+    "code": "DGS",
+    "description": "DOUGLAS, ISLE OF MAN"
+  },
+  {
+    "code": "DID",
+    "description": "Detaille Island"
+  },
+  {
+    "code": "DIK",
+    "description": "DICKINSON ND"
+  },
+  {
+    "code": "DJU",
+    "description": "DJUPIVOGUR"
+  },
+  {
+    "code": "DOV",
+    "description": "DOVER"
+  },
+  {
+    "code": "DPO",
+    "description": "DEVONPORT TAS"
+  },
+  {
+    "code": "DPS",
+    "description": "DENPASAR / BALI"
+  },
+  {
+    "code": "DPV",
+    "description": "DJUPAVIK"
+  },
+  {
+    "code": "DRW",
+    "description": "DARWIN NT"
+  },
+  {
+    "code": "DTM",
+    "description": "DARTMOUTH"
+  },
+  {
+    "code": "DUB",
+    "description": "DUBLIN"
+  },
+  {
+    "code": "DUT",
+    "description": "DUTCH HARBOR AK"
+  },
+  {
+    "code": "EAS",
+    "description": "SAN SEBASTIAN"
+  },
+  {
+    "code": "EBJ",
+    "description": "ESBJERG"
+  },
+  {
+    "code": "EDI",
+    "description": "EDINBURGH"
+  },
+  {
+    "code": "EGE",
+    "description": "EGERSUND"
+  },
+  {
+    "code": "EID",
+    "description": "EIDFJORD"
+  },
+  {
+    "code": "EJD",
+    "description": "Eidi"
+  },
+  {
+    "code": "ELL",
+    "description": "ELLISRAS"
+  },
+  {
+    "code": "EQI",
+    "description": "EQIP SERMIA"
+  },
+  {
+    "code": "ER1",
+    "description": "Ersfjorden"
+  },
+  {
+    "code": "ERC",
+    "description": "ERZINCAN"
+  },
+  {
+    "code": "ESE",
+    "description": "ENSENADA"
+  },
+  {
+    "code": "ESK",
+    "description": "ESKIFJORDUR"
+  },
+  {
+    "code": "EYW",
+    "description": "KEY WEST FL"
+  },
+  {
+    "code": "EZB",
+    "description": "Esperanza Base"
+  },
+  {
+    "code": "F1A",
+    "description": "Froya"
+  },
+  {
+    "code": "FBA",
+    "description": "Fortuna Bay"
+  },
+  {
+    "code": "FCN",
+    "description": "CUXHAVEN"
+  },
+  {
+    "code": "FDF",
+    "description": "FORT DE FRANCE"
+  },
+  {
+    "code": "FE1",
+    "description": "FERRYLAND"
+  },
+  {
+    "code": "FEN",
+    "description": "FERNANDO DE NORONHA"
+  },
+  {
+    "code": "FIE",
+    "description": "FAIR ISLE"
+  },
+  {
+    "code": "FII",
+    "description": "Fish Islands"
+  },
+  {
+    "code": "FLA",
+    "description": "FLATAYRIR"
+  },
+  {
+    "code": "FLM",
+    "description": "FLAM"
+  },
+  {
+    "code": "FNC",
+    "description": "FUNCHAL MADEIRA"
+  },
+  {
+    "code": "FNS",
+    "description": "FINNSNES"
+  },
+  {
+    "code": "FOR",
+    "description": "FORTALEZA"
+  },
+  {
+    "code": "FOY",
+    "description": "FOWEY"
+  },
+  {
+    "code": "FPO",
+    "description": "FREEPORT"
+  },
+  {
+    "code": "FRD",
+    "description": "FRIDAY HARBOR WA"
+  },
+  {
+    "code": "FRF",
+    "description": "VESTERÅLEN"
+  },
+  {
+    "code": "FRO",
+    "description": "FLORO"
+  },
+  {
+    "code": "FRW",
+    "description": "FRANCISTOWN"
+  },
+  {
+    "code": "FSP",
+    "description": "St. Pierre and Miquelon"
+  },
+  {
+    "code": "G1F",
+    "description": "Gryllefjord"
+  },
+  {
+    "code": "GAS",
+    "description": "GARISSA"
+  },
+  {
+    "code": "GCI",
+    "description": "GUERNSEY APT"
+  },
+  {
+    "code": "GDY",
+    "description": "Gydinia"
+  },
+  {
+    "code": "GEC",
+    "description": "GEORGETOWN"
+  },
+  {
+    "code": "GEI",
+    "description": "GEIRANGER"
+  },
+  {
+    "code": "GFJ",
+    "description": "GRUNDARFJORDUR"
+  },
+  {
+    "code": "GGS",
+    "description": "GOBERNADOR GREGORES"
+  },
+  {
+    "code": "GIB",
+    "description": "GIBRALTAR"
+  },
+  {
+    "code": "GLA",
+    "description": "GLASGOW"
+  },
+  {
+    "code": "GLF",
+    "description": "GOLFITO"
+  },
+  {
+    "code": "GLW",
+    "description": "GLASGOW"
+  },
+  {
+    "code": "GMZ",
+    "description": "LA GOMERA"
+  },
+  {
+    "code": "GOA",
+    "description": "GENOA"
+  },
+  {
+    "code": "GOH",
+    "description": "NUUK, GREENLAND"
+  },
+  {
+    "code": "GOT",
+    "description": "GOTHENBURG"
+  },
+  {
+    "code": "GP1",
+    "description": "Grip, Norway"
+  },
+  {
+    "code": "GRI",
+    "description": "GRAND ISLAND NE"
+  },
+  {
+    "code": "GRX",
+    "description": "GRANADA"
+  },
+  {
+    "code": "GRY",
+    "description": "GRIMSEY"
+  },
+  {
+    "code": "GSM",
+    "description": "GENERAL SAN MARTIN"
+  },
+  {
+    "code": "GUE",
+    "description": "GUERNSEY"
+  },
+  {
+    "code": "GV1",
+    "description": "GUDVANGEN"
+  },
+  {
+    "code": "GV5",
+    "description": "Gjesvær"
+  },
+  {
+    "code": "GWY",
+    "description": "GALWAY, IRLAND"
+  },
+  {
+    "code": "GYE",
+    "description": "Guayaquil"
+  },
+  {
+    "code": "HAA",
+    "description": "HASVIK"
+  },
+  {
+    "code": "HAM",
+    "description": "HAMBURG"
+  },
+  {
+    "code": "HAN",
+    "description": "HANOI"
+  },
+  {
+    "code": "HAR",
+    "description": "HARRISBURG PA"
+  },
+  {
+    "code": "HAU",
+    "description": "HAUGESUND"
+  },
+  {
+    "code": "HAV",
+    "description": "HAVANA"
+  },
+  {
+    "code": "HBA",
+    "description": "HOBART TAS"
+  },
+  {
+    "code": "HEI",
+    "description": "HEIMAEY, VESTMANNAEYR"
+  },
+  {
+    "code": "HEL",
+    "description": "HELSINKI"
+  },
+  {
+    "code": "HER",
+    "description": "HERAKLION"
+  },
+  {
+    "code": "HEV",
+    "description": "Huelva"
+  },
+  {
+    "code": "HFA",
+    "description": "HAIFA"
+  },
+  {
+    "code": "HFJ",
+    "description": "HARDANGERFJORD"
+  },
+  {
+    "code": "HFN",
+    "description": "HORNAFJORDUR"
+  },
+  {
+    "code": "HFT",
+    "description": "HAMMERFEST"
+  },
+  {
+    "code": "HGL",
+    "description": "HELGOLAND"
+  },
+  {
+    "code": "HGV",
+    "description": "Henningsvær"
+  },
+  {
+    "code": "HIE",
+    "description": "EL HIERRO"
+  },
+  {
+    "code": "HIR",
+    "description": "HONIARA"
+  },
+  {
+    "code": "HIT",
+    "description": "HITRA"
+  },
+  {
+    "code": "HJF",
+    "description": "HJOERUNDFJORDEN"
+  },
+  {
+    "code": "HKD",
+    "description": "HAKODATE"
+  },
+  {
+    "code": "HKG",
+    "description": "HONG KONG"
+  },
+  {
+    "code": "HKH",
+    "description": "Hekla Havn, Greenland"
+  },
+  {
+    "code": "HKT",
+    "description": "PHUKET"
+  },
+  {
+    "code": "HMO",
+    "description": "HERMOSILLO"
+  },
+  {
+    "code": "HMY",
+    "description": "HAMARØY"
+  },
+  {
+    "code": "HNH",
+    "description": "HOONAH AK"
+  },
+  {
+    "code": "HNL",
+    "description": "HONOLULU HI"
+  },
+  {
+    "code": "HNS",
+    "description": "HAINES AK"
+  },
+  {
+    "code": "HON",
+    "description": "HONFLEUR"
+  },
+  {
+    "code": "HOR",
+    "description": "HORTA AZORES"
+  },
+  {
+    "code": "HOU",
+    "description": "HOUSTON TX"
+  },
+  {
+    "code": "HPO",
+    "description": "Hopen Island, Svalbard"
+  },
+  {
+    "code": "HQM",
+    "description": "HOQUIAM WA"
+  },
+  {
+    "code": "HRD",
+    "description": "HARSTAD"
+  },
+  {
+    "code": "HS1",
+    "description": "Horseshoe Island"
+  },
+  {
+    "code": "HSP",
+    "description": "HOT SPRINGS VA"
+  },
+  {
+    "code": "HTI",
+    "description": "HAMILTON ISLAND QLD"
+  },
+  {
+    "code": "HTO",
+    "description": "HUATULCO"
+  },
+  {
+    "code": "HUS",
+    "description": "HUSAVIK"
+  },
+  {
+    "code": "HVB",
+    "description": "HERVEY BAY  QLD"
+  },
+  {
+    "code": "HVG",
+    "description": "HONNINGSVAG"
+  },
+  {
+    "code": "HVL",
+    "description": "HVALSOY"
+  },
+  {
+    "code": "HVS",
+    "description": "HAVOYSUND"
+  },
+  {
+    "code": "HYF",
+    "description": "HYENFJORD"
+  },
+  {
+    "code": "I1L",
+    "description": "ILLORSSUIT"
+  },
+  {
+    "code": "IBZ",
+    "description": "IBIZA BALEARIC ISLAN"
+  },
+  {
+    "code": "IC2",
+    "description": "Isla de Coiba"
+  },
+  {
+    "code": "IGA",
+    "description": "IGALIKU"
+  },
+  {
+    "code": "IGG",
+    "description": "EIGG"
+  },
+  {
+    "code": "IGL",
+    "description": "IGLOOLIK"
+  },
+  {
+    "code": "ILL",
+    "description": "Illorqortoormiut"
+  },
+  {
+    "code": "ILP",
+    "description": "ILE DES PINS"
+  },
+  {
+    "code": "IND",
+    "description": "INDIANAPOLIS IN"
+  },
+  {
+    "code": "IOM",
+    "description": "ISLE OF MAN"
+  },
+  {
+    "code": "ION",
+    "description": "IONA"
+  },
+  {
+    "code": "IOP",
+    "description": "ISLE OF PORTLAND"
+  },
+  {
+    "code": "IOS",
+    "description": "ILHEUS"
+  },
+  {
+    "code": "IP9",
+    "description": "Isla de la Plata"
+  },
+  {
+    "code": "IQQ",
+    "description": "IQUIQUE, CHILE"
+  },
+  {
+    "code": "IS1",
+    "description": "ICY STRAIT POINT"
+  },
+  {
+    "code": "ISA",
+    "description": "ISAFJÖRDUR"
+  },
+  {
+    "code": "ISC",
+    "description": "Isles of Scilly"
+  },
+  {
+    "code": "IST",
+    "description": "ISTANBUL - ATATURK"
+  },
+  {
+    "code": "ISY",
+    "description": "ISLAY"
+  },
+  {
+    "code": "ITI",
+    "description": "ITILLEQ"
+  },
+  {
+    "code": "ITJ",
+    "description": "Itajai"
+  },
+  {
+    "code": "ITO",
+    "description": "HILO HI"
+  },
+  {
+    "code": "ITQ",
+    "description": "Itilleq"
+  },
+  {
+    "code": "IVI",
+    "description": "IVITTUUT"
+  },
+  {
+    "code": "IZ4",
+    "description": "SANTO TOMAS DE CASTILLA"
+  },
+  {
+    "code": "JAM",
+    "description": "Jan Mayer"
+  },
+  {
+    "code": "JAP",
+    "description": "PUNTARENAS, COSTA RICA"
+  },
+  {
+    "code": "JAV",
+    "description": "ILULISSAT, GREENLAND"
+  },
+  {
+    "code": "JER",
+    "description": "JERSEY"
+  },
+  {
+    "code": "JFR",
+    "description": "FREDERIKSHAAB"
+  },
+  {
+    "code": "JGO",
+    "description": "QEQERTARSUAQ, GREENLAND"
+  },
+  {
+    "code": "JHS",
+    "description": "SISIMIUT, GREENLAND"
+  },
+  {
+    "code": "JJU",
+    "description": "QUAQORTOQ, GREENLAND"
+  },
+  {
+    "code": "JKT",
+    "description": "JAKARTA"
+  },
+  {
+    "code": "JMA",
+    "description": "Jan Mayen"
+  },
+  {
+    "code": "JMK",
+    "description": "MYKONOS"
+  },
+  {
+    "code": "JNS",
+    "description": "NARSAQ"
+  },
+  {
+    "code": "JNU",
+    "description": "JUNEAU AK"
+  },
+  {
+    "code": "JSM",
+    "description": "JOSE DE SAN MARTIN"
+  },
+  {
+    "code": "JSU",
+    "description": "SUKKERTOPPEN"
+  },
+  {
+    "code": "JTR",
+    "description": "THIRA"
+  },
+  {
+    "code": "JYH",
+    "description": "Jyttes Havn, Greenland"
+  },
+  {
+    "code": "KBS",
+    "description": "KILLYBEGS"
+  },
+  {
+    "code": "KCH",
+    "description": "KUCHING"
+  },
+  {
+    "code": "KCL",
+    "description": "CHIGNIK LAGOON AK"
+  },
+  {
+    "code": "KEL",
+    "description": "KIEL"
+  },
+  {
+    "code": "KEM",
+    "description": "KEMI/TORNIO"
+  },
+  {
+    "code": "KG1",
+    "description": "KRAGERØ"
+  },
+  {
+    "code": "KH2",
+    "description": "Kulhus, Greenland"
+  },
+  {
+    "code": "KI3",
+    "description": "ST. KILDA"
+  },
+  {
+    "code": "KII",
+    "description": "Kuummiit, Greenland"
+  },
+  {
+    "code": "KIR",
+    "description": "KIRKWALL"
+  },
+  {
+    "code": "KJD",
+    "description": "KJOLLEFJORD"
+  },
+  {
+    "code": "KKA",
+    "description": "KOYUK AK"
+  },
+  {
+    "code": "KKN",
+    "description": "KIRKENES"
+  },
+  {
+    "code": "KLR",
+    "description": "KALMAR"
+  },
+  {
+    "code": "KNS",
+    "description": "KING ISLAND  TAS"
+  },
+  {
+    "code": "KNV",
+    "description": "Kinvika, Svalbard"
+  },
+  {
+    "code": "KOA",
+    "description": "KONA HI"
+  },
+  {
+    "code": "KOE",
+    "description": "KUPANG"
+  },
+  {
+    "code": "KOJ",
+    "description": "KAGOSHIMA"
+  },
+  {
+    "code": "KRS",
+    "description": "KRISTIANSAND"
+  },
+  {
+    "code": "KSU",
+    "description": "KRISTIANSUND"
+  },
+  {
+    "code": "KTN",
+    "description": "KETCHIKAN AK"
+  },
+  {
+    "code": "KUA",
+    "description": "KUANTAN"
+  },
+  {
+    "code": "KUL",
+    "description": "KUALA LUMPUR MALAYSIA"
+  },
+  {
+    "code": "KUS",
+    "description": "KULUSUK ISLAND"
+  },
+  {
+    "code": "KWL",
+    "description": "GUILIN"
+  },
+  {
+    "code": "LAP",
+    "description": "La Paz"
+  },
+  {
+    "code": "LAX",
+    "description": "LOS ANGELES CA"
+  },
+  {
+    "code": "LB1",
+    "description": "LOUISBOURG"
+  },
+  {
+    "code": "LCA",
+    "description": "LARNACA"
+  },
+  {
+    "code": "LCG",
+    "description": "A CORUNA"
+  },
+  {
+    "code": "LDH",
+    "description": "LORD HOWE ISLAND NSW"
+  },
+  {
+    "code": "LDY",
+    "description": "LONDONDERRY"
+  },
+  {
+    "code": "LED",
+    "description": "ST.PETERSBURG"
+  },
+  {
+    "code": "LEH",
+    "description": "LE HAVRE"
+  },
+  {
+    "code": "LER",
+    "description": "LERWICK"
+  },
+  {
+    "code": "LET",
+    "description": "LEITH"
+  },
+  {
+    "code": "LH1",
+    "description": "LIGHTHOUSE REEF"
+  },
+  {
+    "code": "LIF",
+    "description": "LIFOU"
+  },
+  {
+    "code": "LIO",
+    "description": "Puerto Limon"
+  },
+  {
+    "code": "LIS",
+    "description": "LISBON"
+  },
+  {
+    "code": "LIV",
+    "description": "LIVERPOOL"
+  },
+  {
+    "code": "LMA",
+    "description": "LAKE MINCHUMINA AK"
+  },
+  {
+    "code": "LOM",
+    "description": "LAGOS DE MORENO"
+  },
+  {
+    "code": "LON",
+    "description": "LONDON"
+  },
+  {
+    "code": "LPA",
+    "description": "LAS PALMAS"
+  },
+  {
+    "code": "LPE",
+    "description": "LA PRIMAVERA"
+  },
+  {
+    "code": "LRH",
+    "description": "LA ROCHELLE"
+  },
+  {
+    "code": "LRT",
+    "description": "LORIENT, FRANCE"
+  },
+  {
+    "code": "LSC",
+    "description": "COQUIMBI, CHILE"
+  },
+  {
+    "code": "LTK",
+    "description": "LATAKIA"
+  },
+  {
+    "code": "LTO",
+    "description": "LORETO"
+  },
+  {
+    "code": "LUG",
+    "description": "LUGANO"
+  },
+  {
+    "code": "LUS",
+    "description": "LUSTER"
+  },
+  {
+    "code": "LXM",
+    "description": "L’Anse aux Meadows (Canada)"
+  },
+  {
+    "code": "LXO",
+    "description": "PORTO, LEIXOS"
+  },
+  {
+    "code": "LYR",
+    "description": "LONGYEARBYEN"
+  },
+  {
+    "code": "MAL",
+    "description": "MALOY"
+  },
+  {
+    "code": "MAO",
+    "description": "MANAUS"
+  },
+  {
+    "code": "MAR",
+    "description": "MARIEHAMN"
+  },
+  {
+    "code": "MBJ",
+    "description": "MONTEGO BAY"
+  },
+  {
+    "code": "MDI",
+    "description": "MAKURDI"
+  },
+  {
+    "code": "MEC",
+    "description": "MANTA, ECUADOR"
+  },
+  {
+    "code": "MEH",
+    "description": "MEHAMN"
+  },
+  {
+    "code": "MEL",
+    "description": "MELBOURNE VIC"
+  },
+  {
+    "code": "MFJ",
+    "description": "MOALA"
+  },
+  {
+    "code": "MGD",
+    "description": "MAGDALENA"
+  },
+  {
+    "code": "MI1",
+    "description": "MAGDALEN ISLANDS"
+  },
+  {
+    "code": "MIA",
+    "description": "MIAMI FL"
+  },
+  {
+    "code": "MIN",
+    "description": "MINDELO, CAPE VERDE"
+  },
+  {
+    "code": "MKY",
+    "description": "MACKAY QLD"
+  },
+  {
+    "code": "MLA",
+    "description": "MALTA"
+  },
+  {
+    "code": "MMK",
+    "description": "MURMANSK"
+  },
+  {
+    "code": "MOL",
+    "description": "MOLDE"
+  },
+  {
+    "code": "MOZ",
+    "description": "MOOREA"
+  },
+  {
+    "code": "MRG",
+    "description": "MESTERS VIG"
+  },
+  {
+    "code": "MRI",
+    "description": "MATARANI"
+  },
+  {
+    "code": "MRS",
+    "description": "MARSEILLE"
+  },
+  {
+    "code": "MSN",
+    "description": "MADISON WI"
+  },
+  {
+    "code": "MSY",
+    "description": "NEW ORLEANS LA"
+  },
+  {
+    "code": "MT1",
+    "description": "Motril"
+  },
+  {
+    "code": "MTR",
+    "description": "MONTERIA"
+  },
+  {
+    "code": "MUR",
+    "description": "MURMANSK"
+  },
+  {
+    "code": "MUS",
+    "description": "Manaus"
+  },
+  {
+    "code": "MVD",
+    "description": "MONTEVIDEO"
+  },
+  {
+    "code": "MVY",
+    "description": "MARTHA'S VINEYARD MA"
+  },
+  {
+    "code": "MY1",
+    "description": "Myre, Norway"
+  },
+  {
+    "code": "MY2",
+    "description": "Mykines, Färöer"
+  },
+  {
+    "code": "MYF",
+    "description": "SAN DIEGO CA"
+  },
+  {
+    "code": "MZT",
+    "description": "MAZATLAN"
+  },
+  {
+    "code": "MZY",
+    "description": "MONTEREY"
+  },
+  {
+    "code": "NAE",
+    "description": "NY AALESUND"
+  },
+  {
+    "code": "NAP",
+    "description": "NAPOLI"
+  },
+  {
+    "code": "NAQ",
+    "description": "Qaanaaq (Thule)"
+  },
+  {
+    "code": "NAR",
+    "description": "NARSAQ, GREENLAND"
+  },
+  {
+    "code": "NAS",
+    "description": "NASSAU"
+  },
+  {
+    "code": "NCE",
+    "description": "NICE"
+  },
+  {
+    "code": "NEK",
+    "description": "NEKEMT"
+  },
+  {
+    "code": "NES",
+    "description": "NESNA"
+  },
+  {
+    "code": "NEV",
+    "description": "NEVIS"
+  },
+  {
+    "code": "NF1",
+    "description": "NAEROYFJORD"
+  },
+  {
+    "code": "NF2",
+    "description": "Nusfjord"
+  },
+  {
+    "code": "NFJ",
+    "description": "NORDFJORD"
+  },
+  {
+    "code": "NGS",
+    "description": "NAGASAKI"
+  },
+  {
+    "code": "NHA",
+    "description": "NHA TRANG"
+  },
+  {
+    "code": "NIA",
+    "description": "New Island, FL"
+  },
+  {
+    "code": "NLN",
+    "description": "New London, Norway"
+  },
+  {
+    "code": "NOU",
+    "description": "NOUMEA"
+  },
+  {
+    "code": "NPE",
+    "description": "NAPIER/HASTINGS"
+  },
+  {
+    "code": "NPT",
+    "description": "NEWPORT, RHODE ISLAND"
+  },
+  {
+    "code": "NTE",
+    "description": "NANTES"
+  },
+  {
+    "code": "NTL",
+    "description": "NEWCASTLE NSW"
+  },
+  {
+    "code": "NVK",
+    "description": "NARVIK"
+  },
+  {
+    "code": "NYA",
+    "description": "NY-ÅLESUND"
+  },
+  {
+    "code": "NYC",
+    "description": "New York"
+  },
+  {
+    "code": "OCJ",
+    "description": "OCHO RIOS"
+  },
+  {
+    "code": "OCS",
+    "description": "Orcadas"
+  },
+  {
+    "code": "ODS",
+    "description": "ODESSA"
+  },
+  {
+    "code": "OGG",
+    "description": "KAHULUI MAUI HI"
+  },
+  {
+    "code": "OKD",
+    "description": "OEKSFJORD"
+  },
+  {
+    "code": "OLD",
+    "description": "OLDEN"
+  },
+  {
+    "code": "OME",
+    "description": "Nome"
+  },
+  {
+    "code": "ONX",
+    "description": "COLON"
+  },
+  {
+    "code": "OPO",
+    "description": "OPORTO"
+  },
+  {
+    "code": "OQA",
+    "description": "OQAATSUT"
+  },
+  {
+    "code": "ORF",
+    "description": "NORFOLK VA"
+  },
+  {
+    "code": "ORK",
+    "description": "CORK"
+  },
+  {
+    "code": "ORS",
+    "description": "ORNES"
+  },
+  {
+    "code": "OSA",
+    "description": "OSAKA"
+  },
+  {
+    "code": "OSB",
+    "description": "OS"
+  },
+  {
+    "code": "OSL",
+    "description": "OSLO"
+  },
+  {
+    "code": "OST",
+    "description": "OSTEND"
+  },
+  {
+    "code": "PAL",
+    "description": "PALMEIRA"
+  },
+  {
+    "code": "PAP",
+    "description": "PORT AU PRINCE"
+  },
+  {
+    "code": "PAS",
+    "description": "PUNTARENAS"
+  },
+  {
+    "code": "PAT",
+    "description": "PATNA"
+  },
+  {
+    "code": "PAX",
+    "description": "Port au Choix, Canada"
+  },
+  {
+    "code": "PAY",
+    "description": "PARATY"
+  },
+  {
+    "code": "PBA",
+    "description": "POINT BARROW"
+  },
+  {
+    "code": "PBO",
+    "description": "PARABURDOO WA"
+  },
+  {
+    "code": "PC2",
+    "description": "Cruising through Panama Canal"
+  },
+  {
+    "code": "PC5",
+    "description": "PUERTO CHIAPAS"
+  },
+  {
+    "code": "PCA",
+    "description": "PORTAGE CREEK AK"
+  },
+  {
+    "code": "PCC",
+    "description": "Port Charcot"
+  },
+  {
+    "code": "PCL",
+    "description": "PUCALLPA"
+  },
+  {
+    "code": "PCM",
+    "description": "PLAYA DEL CARMEN"
+  },
+  {
+    "code": "PDL",
+    "description": "PONTA DELGADA AZORES"
+  },
+  {
+    "code": "PDX",
+    "description": "PORTLAND OR"
+  },
+  {
+    "code": "PEN",
+    "description": "PENANG"
+  },
+  {
+    "code": "PFJ",
+    "description": "PATREKSFJORDUR"
+  },
+  {
+    "code": "PFO",
+    "description": "PAPHOS"
+  },
+  {
+    "code": "PHF",
+    "description": "NEWPORT NEWS VA"
+  },
+  {
+    "code": "PHL",
+    "description": "PHILADELPHIA PA"
+  },
+  {
+    "code": "PII",
+    "description": "Pico Isla, Azores"
+  },
+  {
+    "code": "PIN",
+    "description": "PARINTINS"
+  },
+  {
+    "code": "PIO",
+    "description": "PARACAS (PISCO)"
+  },
+  {
+    "code": "PIR",
+    "description": "PIERRE SD"
+  },
+  {
+    "code": "PIX",
+    "description": "PICO ISLAND"
+  },
+  {
+    "code": "PLO",
+    "description": "PORT LOCKROY"
+  },
+  {
+    "code": "PM1",
+    "description": "Petermann Island"
+  },
+  {
+    "code": "PMC",
+    "description": "PUERTO MONTT"
+  },
+  {
+    "code": "PMD",
+    "description": "PALMDALE CA"
+  },
+  {
+    "code": "PMI",
+    "description": "PALMA DE MALLORCA"
+  },
+  {
+    "code": "PMY",
+    "description": "PUERTO MADRYN"
+  },
+  {
+    "code": "PNG",
+    "description": "Paranagua, Brazil"
+  },
+  {
+    "code": "PNT",
+    "description": "Puerto Natales, Chile"
+  },
+  {
+    "code": "POM",
+    "description": "PORT MORESBY"
+  },
+  {
+    "code": "POR",
+    "description": "PORTSMOUTH"
+  },
+  {
+    "code": "POT",
+    "description": "PORT ANTONIO"
+  },
+  {
+    "code": "PP2",
+    "description": "POOLEPYNTEN"
+  },
+  {
+    "code": "PPG",
+    "description": "PAGO PAGO"
+  },
+  {
+    "code": "PPO",
+    "description": "ST. PETER PORT"
+  },
+  {
+    "code": "PPT",
+    "description": "PAPEETE TAHITI"
+  },
+  {
+    "code": "PSA",
+    "description": "PISA"
+  },
+  {
+    "code": "PSE",
+    "description": "PONCE  PUERTO RICO"
+  },
+  {
+    "code": "PSG",
+    "description": "PETERSBURG AK"
+  },
+  {
+    "code": "PSY",
+    "description": "PORT STANLEY"
+  },
+  {
+    "code": "PTE",
+    "description": "PORTREE, SKYE"
+  },
+  {
+    "code": "PTL",
+    "description": "PORTLAND, GB"
+  },
+  {
+    "code": "PTP",
+    "description": "POINT A PITRE"
+  },
+  {
+    "code": "PTY",
+    "description": "PANAMA CITY"
+  },
+  {
+    "code": "PUE",
+    "description": "Puerto Eden, Chile"
+  },
+  {
+    "code": "PUQ",
+    "description": "PUNTA ARENAS"
+  },
+  {
+    "code": "PUS",
+    "description": "PUSAN"
+  },
+  {
+    "code": "PVA",
+    "description": "ISLA DE PROVIDENCIA"
+  },
+  {
+    "code": "PVC",
+    "description": "PROVINCETOWN MA"
+  },
+  {
+    "code": "PVR",
+    "description": "PUERTO VALLARTA"
+  },
+  {
+    "code": "PWM",
+    "description": "PORTLAND ME"
+  },
+  {
+    "code": "PWS",
+    "description": "Port Williams, Chile"
+  },
+  {
+    "code": "PXO",
+    "description": "PORTO SANTO MADEIRA"
+  },
+  {
+    "code": "PYR",
+    "description": "Pyramiden"
+  },
+  {
+    "code": "Q1G",
+    "description": "QASIGIANNGUIT"
+  },
+  {
+    "code": "QFT",
+    "description": "QASSIARSUK, GREENLAND"
+  },
+  {
+    "code": "QIJ",
+    "description": "Gijon"
+  },
+  {
+    "code": "R1N",
+    "description": "REINE"
+  },
+  {
+    "code": "RAI",
+    "description": "PRAIA"
+  },
+  {
+    "code": "RAR",
+    "description": "RAROTONGA"
+  },
+  {
+    "code": "RB1",
+    "description": "RED BAY, LABRADOR"
+  },
+  {
+    "code": "REC",
+    "description": "RECIFE"
+  },
+  {
+    "code": "REF",
+    "description": "Reykjafjordur"
+  },
+  {
+    "code": "REK",
+    "description": "REYKJAVIK"
+  },
+  {
+    "code": "RHO",
+    "description": "RHODES"
+  },
+  {
+    "code": "RIG",
+    "description": "RIO GRANDE"
+  },
+  {
+    "code": "RIN",
+    "description": "RISOYHAMN"
+  },
+  {
+    "code": "RIO",
+    "description": "RIO DE JANEIRO"
+  },
+  {
+    "code": "RIX",
+    "description": "RIGA"
+  },
+  {
+    "code": "RKD",
+    "description": "ROCKLAND ME"
+  },
+  {
+    "code": "RN2",
+    "description": "LITTLE CORN ISLAND"
+  },
+  {
+    "code": "RNI",
+    "description": "CORN ISLAND"
+  },
+  {
+    "code": "RO1",
+    "description": "ROSENDAL"
+  },
+  {
+    "code": "RSU",
+    "description": "YOSU"
+  },
+  {
+    "code": "RTB",
+    "description": "ROATAN"
+  },
+  {
+    "code": "RTM",
+    "description": "ROTTERDAM"
+  },
+  {
+    "code": "RVK",
+    "description": "ROERVIK"
+  },
+  {
+    "code": "RWB",
+    "description": "ROWAN BAY AK"
+  },
+  {
+    "code": "SA1",
+    "description": "STAFFA ISLAND"
+  },
+  {
+    "code": "SA3",
+    "description": "St. Andrews Bay"
+  },
+  {
+    "code": "SAN",
+    "description": "San Diego"
+  },
+  {
+    "code": "SAV",
+    "description": "SAVANNAH GA"
+  },
+  {
+    "code": "SAW",
+    "description": "ISTANBUL - SABIHA GOKCEN"
+  },
+  {
+    "code": "SBA",
+    "description": "SANTA BARBARA CA"
+  },
+  {
+    "code": "SCT",
+    "description": "SANTA CRUZ DE TENERIFE"
+  },
+  {
+    "code": "SDP",
+    "description": "SAND POINT AK"
+  },
+  {
+    "code": "SDQ",
+    "description": "SANTO DOMINGO"
+  },
+  {
+    "code": "SEA",
+    "description": "SEATTLE WA"
+  },
+  {
+    "code": "SEY",
+    "description": "Seydisfjôrdur"
+  },
+  {
+    "code": "SF1",
+    "description": "SONGNEFJORD"
+  },
+  {
+    "code": "SFI",
+    "description": "Safi (Morocco)"
+  },
+  {
+    "code": "SFJ",
+    "description": "SONDRE STROMFJORD/KANGERLUSSUAQ"
+  },
+  {
+    "code": "SFO",
+    "description": "SAN FRANCISCO CA"
+  },
+  {
+    "code": "SGE",
+    "description": "SIEGEN"
+  },
+  {
+    "code": "SGI",
+    "description": "Stonington Island"
+  },
+  {
+    "code": "SGN",
+    "description": "HO CHI MINH CITY"
+  },
+  {
+    "code": "SGY",
+    "description": "SKAGWAY AK"
+  },
+  {
+    "code": "SH1",
+    "description": "SKUDENESHAVN"
+  },
+  {
+    "code": "SHA",
+    "description": "SHANGHAI"
+  },
+  {
+    "code": "SHI",
+    "description": "SHIMOJISHIMA"
+  },
+  {
+    "code": "SIG",
+    "description": "SIGLUFJORDUR"
+  },
+  {
+    "code": "SIN",
+    "description": "SINGAPORE"
+  },
+  {
+    "code": "SIT",
+    "description": "SITKA AK"
+  },
+  {
+    "code": "SJB",
+    "description": "SAN JOAQUIN"
+  },
+  {
+    "code": "SJS",
+    "description": "SAN JUAN DEL SUR"
+  },
+  {
+    "code": "SJU",
+    "description": "SAN JUAN PR"
+  },
+  {
+    "code": "SKB",
+    "description": "SAINT KITTS"
+  },
+  {
+    "code": "SKL",
+    "description": "Skjoldungen, Greenland"
+  },
+  {
+    "code": "SKN",
+    "description": "STOKMARKNES"
+  },
+  {
+    "code": "SL1",
+    "description": "SAN LORENZO"
+  },
+  {
+    "code": "SLU",
+    "description": "ST LUCIA"
+  },
+  {
+    "code": "SLZ",
+    "description": "SAO LUIZ"
+  },
+  {
+    "code": "SMI",
+    "description": "SAMOS"
+  },
+  {
+    "code": "SML",
+    "description": "STELLA MARIS"
+  },
+  {
+    "code": "SMR",
+    "description": "SANTA MARTA"
+  },
+  {
+    "code": "SMY",
+    "description": "Sommarøy"
+  },
+  {
+    "code": "SNB",
+    "description": "SNAKE BAY NT"
+  },
+  {
+    "code": "SND",
+    "description": "Saunders Island"
+  },
+  {
+    "code": "SNP",
+    "description": "SAINT PAUL ISLAND AK"
+  },
+  {
+    "code": "SNS",
+    "description": "Stromness"
+  },
+  {
+    "code": "SOU",
+    "description": "SOUTHAMPTON"
+  },
+  {
+    "code": "SPC",
+    "description": "SANTA CRUZ LA PALMA"
+  },
+  {
+    "code": "SPL",
+    "description": "Salisbury, England"
+  },
+  {
+    "code": "SPR",
+    "description": "SAN PEDRO"
+  },
+  {
+    "code": "SRD",
+    "description": "SORTLAND"
+  },
+  {
+    "code": "SRG",
+    "description": "SEMARANG"
+  },
+  {
+    "code": "SRY",
+    "description": "SKJERVOY"
+  },
+  {
+    "code": "SSA",
+    "description": "SALVADOR"
+  },
+  {
+    "code": "SSJ",
+    "description": "SANDNESSJØEN"
+  },
+  {
+    "code": "SST",
+    "description": "Sistranda"
+  },
+  {
+    "code": "SSZ",
+    "description": "Santos"
+  },
+  {
+    "code": "ST2",
+    "description": "STORNOWAY"
+  },
+  {
+    "code": "STG",
+    "description": "ST GEORGE ISLAND AK"
+  },
+  {
+    "code": "STM",
+    "description": "SANTAREM"
+  },
+  {
+    "code": "STO",
+    "description": "STOCKHOLM"
+  },
+  {
+    "code": "STR",
+    "description": "STUTTGART"
+  },
+  {
+    "code": "STS",
+    "description": "SANTA ROSA CA"
+  },
+  {
+    "code": "STT",
+    "description": "ST THOMAS VI"
+  },
+  {
+    "code": "STU",
+    "description": "STAMSUND"
+  },
+  {
+    "code": "STX",
+    "description": "ST CROIX VI"
+  },
+  {
+    "code": "STY",
+    "description": "STYKKISHOLMUR"
+  },
+  {
+    "code": "SUB",
+    "description": "SURABAYA"
+  },
+  {
+    "code": "SUV",
+    "description": "SUVA"
+  },
+  {
+    "code": "SV4",
+    "description": "Skarsvåg"
+  },
+  {
+    "code": "SVG",
+    "description": "STAVANGER"
+  },
+  {
+    "code": "SVJ",
+    "description": "SVOLVAER"
+  },
+  {
+    "code": "SVQ",
+    "description": "SEVILLE"
+  },
+  {
+    "code": "SWD",
+    "description": "Seward"
+  },
+  {
+    "code": "SXM",
+    "description": "ST MAARTEN"
+  },
+  {
+    "code": "SYD",
+    "description": "SYDNEY NSW"
+  },
+  {
+    "code": "T1A",
+    "description": "THORSHOFN"
+  },
+  {
+    "code": "TAQ",
+    "description": "Tasiilaq, Greenland"
+  },
+  {
+    "code": "TAR",
+    "description": "TARBERT"
+  },
+  {
+    "code": "TAS",
+    "description": "TASHKENT"
+  },
+  {
+    "code": "TB1",
+    "description": "TØNSBERG"
+  },
+  {
+    "code": "TBU",
+    "description": "TONGATAPU NUKUALOFA"
+  },
+  {
+    "code": "TCI",
+    "description": "TENERIFE CANARY ISL"
+  },
+  {
+    "code": "TER",
+    "description": "TERCEIRA AZORES ISDS"
+  },
+  {
+    "code": "TEY",
+    "description": "Thingeyri"
+  },
+  {
+    "code": "TF0",
+    "description": "Trollfjord"
+  },
+  {
+    "code": "TH1",
+    "description": "Torghatten"
+  },
+  {
+    "code": "THO",
+    "description": "THORSHAVN, FÆRØYENE"
+  },
+  {
+    "code": "TIS",
+    "description": "THURSDAY ISLAND QLD"
+  },
+  {
+    "code": "TJI",
+    "description": "TRUJILLO, HN"
+  },
+  {
+    "code": "TLL",
+    "description": "TALLINN"
+  },
+  {
+    "code": "TN1",
+    "description": "TRANØY"
+  },
+  {
+    "code": "TNG",
+    "description": "TANGIER"
+  },
+  {
+    "code": "TNS",
+    "description": "Torellneset, Svalbard"
+  },
+  {
+    "code": "TOS",
+    "description": "TROMSØ"
+  },
+  {
+    "code": "TPC",
+    "description": "TARAPOA"
+  },
+  {
+    "code": "TRD",
+    "description": "TRONDHEIM"
+  },
+  {
+    "code": "TRF",
+    "description": "SANDEFJORD"
+  },
+  {
+    "code": "TRU",
+    "description": "SALAVERRY, PERU"
+  },
+  {
+    "code": "TSV",
+    "description": "TOWNSVILLE QLD"
+  },
+  {
+    "code": "TT1",
+    "description": "Tortel, Chile"
+  },
+  {
+    "code": "TVK",
+    "description": "TORVIK"
+  },
+  {
+    "code": "TYO",
+    "description": "TOKYO"
+  },
+  {
+    "code": "UAK",
+    "description": "NARSARSUAQ"
+  },
+  {
+    "code": "UD1",
+    "description": "Undredal"
+  },
+  {
+    "code": "UKK",
+    "description": "UKKUSISSAT"
+  },
+  {
+    "code": "UL1",
+    "description": "ULLENSVANG"
+  },
+  {
+    "code": "ULT",
+    "description": "Ulsteinvik"
+  },
+  {
+    "code": "ULV",
+    "description": "ULVIK"
+  },
+  {
+    "code": "UMD",
+    "description": "UUMMANNAQ, GREENLAND"
+  },
+  {
+    "code": "UMK",
+    "description": "Umivik, Greenland"
+  },
+  {
+    "code": "UN1",
+    "description": "UNGA VILLAGE"
+  },
+  {
+    "code": "UNA",
+    "description": "UNARTOQ"
+  },
+  {
+    "code": "UNI",
+    "description": "UNION ISLAND"
+  },
+  {
+    "code": "UPE",
+    "description": "UPERNAVIK"
+  },
+  {
+    "code": "UQ1",
+    "description": "Uunartoq"
+  },
+  {
+    "code": "URO",
+    "description": "ROUEN"
+  },
+  {
+    "code": "USH",
+    "description": "USHUAIA"
+  },
+  {
+    "code": "USM",
+    "description": "KOH SAMUI"
+  },
+  {
+    "code": "VÆR",
+    "description": "VÆRØY"
+  },
+  {
+    "code": "VAN",
+    "description": "VAN"
+  },
+  {
+    "code": "VAP",
+    "description": "Valparaiso, Chile"
+  },
+  {
+    "code": "VAR",
+    "description": "VARNA"
+  },
+  {
+    "code": "VBC",
+    "description": "Volquart Boons Coast, Greenland"
+  },
+  {
+    "code": "VBY",
+    "description": "VISBY, GOTLAND"
+  },
+  {
+    "code": "VCE",
+    "description": "VENICE"
+  },
+  {
+    "code": "VDS",
+    "description": "VADSO"
+  },
+  {
+    "code": "VG4",
+    "description": "Vega, Norway"
+  },
+  {
+    "code": "VGO",
+    "description": "VIGO"
+  },
+  {
+    "code": "VIB",
+    "description": "Vikingebukta, Greenland"
+  },
+  {
+    "code": "VIG",
+    "description": "VIGUR"
+  },
+  {
+    "code": "VIJ",
+    "description": "VIRGIN GORDA"
+  },
+  {
+    "code": "VIK",
+    "description": "Vikingen"
+  },
+  {
+    "code": "VIL",
+    "description": "VILAGARCFA, SPAIN"
+  },
+  {
+    "code": "VKY",
+    "description": "Vernadsky Research Base"
+  },
+  {
+    "code": "VL1",
+    "description": "Vaerlandet"
+  },
+  {
+    "code": "VLC",
+    "description": "VALENCIA"
+  },
+  {
+    "code": "VLI",
+    "description": "PORT VILA"
+  },
+  {
+    "code": "VRD",
+    "description": "VARDO"
+  },
+  {
+    "code": "VRY",
+    "description": "Værøy"
+  },
+  {
+    "code": "VVO",
+    "description": "VLADIVOSTOK"
+  },
+  {
+    "code": "WAT",
+    "description": "WATERFORD"
+  },
+  {
+    "code": "WCA",
+    "description": "CASTRO"
+  },
+  {
+    "code": "WLG",
+    "description": "WELLINGTON"
+  },
+  {
+    "code": "WPA",
+    "description": "PUERTO WILLIAMS"
+  },
+  {
+    "code": "WPO",
+    "description": "West Point"
+  },
+  {
+    "code": "WRG",
+    "description": "WRANGELL AK"
+  },
+  {
+    "code": "WST",
+    "description": "WESTERLY RI"
+  },
+  {
+    "code": "WYP",
+    "description": "Woody Point (Canada)"
+  },
+  {
+    "code": "XDK",
+    "description": "DUNKERQUE LES MOERES"
+  },
+  {
+    "code": "XQP",
+    "description": "QUEPOS"
+  },
+  {
+    "code": "XSB",
+    "description": "St. Malo"
+  },
+  {
+    "code": "YAK",
+    "description": "YAKUTAT AK"
+  },
+  {
+    "code": "YBC",
+    "description": "BAIE COMEAU"
+  },
+  {
+    "code": "YBG",
+    "description": "BAGOTVILLE"
+  },
+  {
+    "code": "YCB",
+    "description": "CAMBRIDGE BAY"
+  },
+  {
+    "code": "YDP",
+    "description": "NAIN"
+  },
+  {
+    "code": "YFB",
+    "description": "IQALUIT"
+  },
+  {
+    "code": "YGR",
+    "description": "ILES DE LA MADELEINE"
+  },
+  {
+    "code": "YGV",
+    "description": "HAVRE SAINT PIERRE"
+  },
+  {
+    "code": "YHI",
+    "description": "HOLMAN ISLAND"
+  },
+  {
+    "code": "YHK",
+    "description": "GJOA HAVEN"
+  },
+  {
+    "code": "YHO",
+    "description": "HOPEDALE"
+  },
+  {
+    "code": "YHZ",
+    "description": "HALIFAX"
+  },
+  {
+    "code": "YIO",
+    "description": "POND INLET"
+  },
+  {
+    "code": "YLC",
+    "description": "KIMMIRUT/LAKE HARBOUR"
+  },
+  {
+    "code": "YM4",
+    "description": "Ymerbukta, Svalbard"
+  },
+  {
+    "code": "YQB",
+    "description": "QUEBEC"
+  },
+  {
+    "code": "YQI",
+    "description": "YARMOUTH"
+  },
+  {
+    "code": "YQY",
+    "description": "SYDNEY"
+  },
+  {
+    "code": "YRG",
+    "description": "RIGOLET"
+  },
+  {
+    "code": "YSV",
+    "description": "Saglek"
+  },
+  {
+    "code": "YVB",
+    "description": "BONAVENTURE"
+  },
+  {
+    "code": "YVP",
+    "description": "KUUJJUAQ"
+  },
+  {
+    "code": "YVR",
+    "description": "Vancouver"
+  },
+  {
+    "code": "YYG",
+    "description": "CHARLOTTETOWN"
+  },
+  {
+    "code": "YYT",
+    "description": "SAINT JOHN'S"
+  },
+  {
+    "code": "ZAL",
+    "description": "VALDIVIA"
+  },
+  {
+    "code": "ZLO",
+    "description": "MANZANILLO"
+  },
+  {
+    "code": "A1F",
+    "description": "ALPEFJORDEN"
+  },
+  {
+    "code": "A2F",
+    "description": "ALKEFJELLET"
+  },
+  {
+    "code": "AC2",
+    "description": "Alter do Chão, Brazil"
+  },
+  {
+    "code": "AI2",
+    "description": "AKPATOK ISLAND"
+  },
+  {
+    "code": "AL4",
+    "description": "ALKEPYNTEN"
+  },
+  {
+    "code": "AMR",
+    "description": "AMRUM"
+  },
+  {
+    "code": "AN1",
+    "description": "ANDRÉENESET"
+  },
+  {
+    "code": "AOU",
+    "description": "AVALON, SANTA CATALINA ISLAND"
+  },
+  {
+    "code": "AR1",
+    "description": "ISLE OF ARRAN"
+  },
+  {
+    "code": "AS2",
+    "description": "AHLSTRANDHALVØYA"
+  },
+  {
+    "code": "AS3",
+    "description": "ANTARCTICA SOUND"
+  },
+  {
+    "code": "B1B",
+    "description": "BLOMSTERBUKTA"
+  },
+  {
+    "code": "B1K",
+    "description": "BJØRKE"
+  },
+  {
+    "code": "B1P",
+    "description": "BREPOLLEN"
+  },
+  {
+    "code": "B1S",
+    "description": "BELLSUND"
+  },
+  {
+    "code": "B3F",
+    "description": "BOCKFJORDEN"
+  },
+  {
+    "code": "BB2",
+    "description": "BLOMSTERBUKTA"
+  },
+  {
+    "code": "BB3",
+    "description": "BAMBSEBU"
+  },
+  {
+    "code": "BD2",
+    "description": "BUTEDALE"
+  },
+  {
+    "code": "BJ2",
+    "description": "BJØRNE ØER"
+  },
+  {
+    "code": "BL2",
+    "description": "Bíldudalur"
+  },
+  {
+    "code": "BOR",
+    "description": "BORDEAUX"
+  },
+  {
+    "code": "BQY",
+    "description": "BAY OF BISCAY"
+  },
+  {
+    "code": "BR2",
+    "description": "BRUCEBYEN"
+  },
+  {
+    "code": "BRB",
+    "description": "BRUNSBUETTEL"
+  },
+  {
+    "code": "BY1",
+    "description": "BJØRNØYA"
+  },
+  {
+    "code": "CAD",
+    "description": "CADIZ"
+  },
+  {
+    "code": "CB1",
+    "description": "CONNINGHAM BAY"
+  },
+  {
+    "code": "CBA",
+    "description": "CASTLEBAY"
+  },
+  {
+    "code": "CC1",
+    "description": "CAOYOS COCHINOS"
+  },
+  {
+    "code": "CC2",
+    "description": "Cape Chidley Islands"
+  },
+  {
+    "code": "CCA",
+    "description": "CIVATAVECCHIA"
+  },
+  {
+    "code": "CE1",
+    "description": "CEBACO ISLAND"
+  },
+  {
+    "code": "CFJ",
+    "description": "Chilean Fjords"
+  },
+  {
+    "code": "CH2",
+    "description": "C. HOFMANN HALVØ"
+  },
+  {
+    "code": "CKL",
+    "description": "TRANSIT KIEL CANAL"
+  },
+  {
+    "code": "CNA",
+    "description": "ISLE OF CANNA"
+  },
+  {
+    "code": "CO2",
+    "description": "COAST OF FRANCE"
+  },
+  {
+    "code": "CQ1",
+    "description": "CIQUIMBO"
+  },
+  {
+    "code": "CR1",
+    "description": "NARVIK "
+  },
+  {
+    "code": "CS1",
+    "description": "CRYSTAL SOUND"
+  },
+  {
+    "code": "CSA",
+    "description": "COLONSAY"
+  },
+  {
+    "code": "CTS",
+    "description": "SAPPORO CHITOSE"
+  },
+  {
+    "code": "CUB",
+    "description": "RATHLIN ISLAND"
+  },
+  {
+    "code": "D1B",
+    "description": "DANEBORG"
+  },
+  {
+    "code": "D1H",
+    "description": "DANMARKSHAVN"
+  },
+  {
+    "code": "D2B",
+    "description": "DØDMANNSBUKTA"
+  },
+  {
+    "code": "DB3",
+    "description": "DIANA BAY"
+  },
+  {
+    "code": "DH1",
+    "description": "DOMBRAVAHYTTEN"
+  },
+  {
+    "code": "DI1",
+    "description": "DISKOBUKTA"
+  },
+  {
+    "code": "DO2",
+    "description": "DANMARKS Ø"
+  },
+  {
+    "code": "DS1",
+    "description": "DENMARK STRAIT"
+  },
+  {
+    "code": "DU1",
+    "description": "DUNDAS HARBOUR"
+  },
+  {
+    "code": "EAG",
+    "description": "NIAGARA FALLS"
+  },
+  {
+    "code": "ED1",
+    "description": "Edgeøya"
+  },
+  {
+    "code": "EL1",
+    "description": "ELEPHANT ISLAND"
+  },
+  {
+    "code": "EL2",
+    "description": "ELDUVIK"
+  },
+  {
+    "code": "ELN",
+    "description": "EOULSNESET"
+  },
+  {
+    "code": "END",
+    "description": "ENDICOTT ARM"
+  },
+  {
+    "code": "EO2",
+    "description": "ELLA Ø"
+  },
+  {
+    "code": "FAL",
+    "description": "FALMOUTH"
+  },
+  {
+    "code": "FD1",
+    "description": "FARSUND"
+  },
+  {
+    "code": "FF1",
+    "description": "FJÆRLANDSFJORDEN"
+  },
+  {
+    "code": "FI1",
+    "description": "FRISIAN ISLANDS, NL"
+  },
+  {
+    "code": "FIS",
+    "description": "FISHGUARD"
+  },
+  {
+    "code": "FJL",
+    "description": "FJÆRLAND"
+  },
+  {
+    "code": "FMS",
+    "description": "Freemandsundet"
+  },
+  {
+    "code": "FO2",
+    "description": "FORT ROSS"
+  },
+  {
+    "code": "FR2",
+    "description": "FORSAND"
+  },
+  {
+    "code": "FUA",
+    "description": "FUERTE AMADOR"
+  },
+  {
+    "code": "GE1",
+    "description": "GEIRANGER"
+  },
+  {
+    "code": "GH1",
+    "description": "GEOGRAPHIC HARBOR"
+  },
+  {
+    "code": "GH2",
+    "description": "GOLD HARBOUR"
+  },
+  {
+    "code": "GHN",
+    "description": "Gråhuken, Svalbard"
+  },
+  {
+    "code": "GI1",
+    "description": "GORGONA ISLAND"
+  },
+  {
+    "code": "GI2",
+    "description": "ISLE OF GIGHA"
+  },
+  {
+    "code": "GJ1",
+    "description": "GJESVÆRSTAPPAN"
+  },
+  {
+    "code": "GN2",
+    "description": "GNÅLODDEN"
+  },
+  {
+    "code": "GR1",
+    "description": "GRAVNESET"
+  },
+  {
+    "code": "GR2",
+    "description": "GRAVNESODDEN"
+  },
+  {
+    "code": "GRD",
+    "description": "GRUNDSUND"
+  },
+  {
+    "code": "GRK",
+    "description": "KILLEEN FORT HOOD REGIONAL AIRPORT"
+  },
+  {
+    "code": "GS1",
+    "description": "GERLACHE STRAIT (NORTH)"
+  },
+  {
+    "code": "GS2",
+    "description": "GERLACHE STRAIT (SOUTH)"
+  },
+  {
+    "code": "H1N",
+    "description": "HANSTHOLM"
+  },
+  {
+    "code": "H1O",
+    "description": "HVALROSSODDEN"
+  },
+  {
+    "code": "HA6",
+    "description": "HAMILTONBUKTA"
+  },
+  {
+    "code": "HB1",
+    "description": "HERCULES BAY"
+  },
+  {
+    "code": "HB2",
+    "description": "Hebron"
+  },
+  {
+    "code": "HF1",
+    "description": "HAMMERFEST"
+  },
+  {
+    "code": "HG1",
+    "description": "HUBBARD GLACIER"
+  },
+  {
+    "code": "HI1",
+    "description": "HINLOPEN"
+  },
+  {
+    "code": "HLI",
+    "description": "HERSCHEL ISLAND"
+  },
+  {
+    "code": "HN1",
+    "description": "HORNSUND"
+  },
+  {
+    "code": "HNN",
+    "description": "Havnnes"
+  },
+  {
+    "code": "HRN",
+    "description": "HORNVIKA"
+  },
+  {
+    "code": "HSY",
+    "description": "HELLESYLT"
+  },
+  {
+    "code": "HY1",
+    "description": "HRISEY"
+  },
+  {
+    "code": "HYT",
+    "description": "HYTTEVIKA"
+  },
+  {
+    "code": "I1B",
+    "description": "ISFLAKBUKTA"
+  },
+  {
+    "code": "I1F",
+    "description": "ISFJORDEN, SVALBARD"
+  },
+  {
+    "code": "ICY",
+    "description": "ICY BAY"
+  },
+  {
+    "code": "IG2",
+    "description": "INAGUA ISLANDS"
+  },
+  {
+    "code": "IU1",
+    "description": "ISLA DE UTILA"
+  },
+  {
+    "code": "JB1",
+    "description": "JOHANSEN BAY"
+  },
+  {
+    "code": "KÄ2",
+    "description": "KÄRINGÖN"
+  },
+  {
+    "code": "KA4",
+    "description": "KALVÅG"
+  },
+  {
+    "code": "KF1",
+    "description": "KROSSFJORDEN"
+  },
+  {
+    "code": "KFJ",
+    "description": "Kongsfjorden, Svalbard"
+  },
+  {
+    "code": "KL1",
+    "description": "KAPP LEE"
+  },
+  {
+    "code": "KL2",
+    "description": "KLOSTERØY"
+  },
+  {
+    "code": "KO1",
+    "description": "KOSTER"
+  },
+  {
+    "code": "KRA",
+    "description": "KRAGERØ"
+  },
+  {
+    "code": "KV1",
+    "description": "KVANEFJORD"
+  },
+  {
+    "code": "KV2",
+    "description": "KVITØYA"
+  },
+  {
+    "code": "L1N",
+    "description": "LYNGSALPENE"
+  },
+  {
+    "code": "LC1",
+    "description": "Rio La Chunga"
+  },
+  {
+    "code": "LD1",
+    "description": "LOCH DUNVEGAN"
+  },
+  {
+    "code": "LF1",
+    "description": "LIEFDEFJORDEN"
+  },
+  {
+    "code": "LGA",
+    "description": "LA GUARDIA INTL AIRPORT"
+  },
+  {
+    "code": "LI3",
+    "description": "LIST/SYLT"
+  },
+  {
+    "code": "LN1",
+    "description": "MOUNT HOVEN (LOEN)"
+  },
+  {
+    "code": "LO1",
+    "description": "LOCH SCAVAIG"
+  },
+  {
+    "code": "LO2",
+    "description": "LOCH SUNART"
+  },
+  {
+    "code": "LS1",
+    "description": "LYNGSEIDET"
+  },
+  {
+    "code": "LYY",
+    "description": "Lysefjord"
+  },
+  {
+    "code": "M1B",
+    "description": "MYGGBUKTA"
+  },
+  {
+    "code": "M1D",
+    "description": "MØRKEFJORD"
+  },
+  {
+    "code": "M1F",
+    "description": "MAGDALENEFJORD"
+  },
+  {
+    "code": "M1H",
+    "description": "MØNSTERHUS"
+  },
+  {
+    "code": "M1O",
+    "description": "MOFFEN 80' NORTH"
+  },
+  {
+    "code": "M1V",
+    "description": "MEISTERVIG"
+  },
+  {
+    "code": "MB1",
+    "description": "MARGUERITE BAY"
+  },
+  {
+    "code": "MB2",
+    "description": "MYGGBUKTA"
+  },
+  {
+    "code": "ME1",
+    "description": "MEFJORDEN"
+  },
+  {
+    "code": "MIH",
+    "description": "MIKKELSEN HARBOUR"
+  },
+  {
+    "code": "MLF",
+    "description": "MILFORD HAVEN"
+  },
+  {
+    "code": "NKS",
+    "description": "NORDKAPPSUNDET"
+  },
+  {
+    "code": "NWC",
+    "description": "NW CORNER"
+  },
+  {
+    "code": "OBA",
+    "description": "OBAN"
+  },
+  {
+    "code": "OH1",
+    "description": "ORNE HARBOUR"
+  },
+  {
+    "code": "OK1",
+    "description": "Okak"
+  },
+  {
+    "code": "P1P",
+    "description": "POLEPYNTEN"
+  },
+  {
+    "code": "PA2",
+    "description": "POINT ADOLPHUS"
+  },
+  {
+    "code": "PB1",
+    "description": "PASLEY BAY"
+  },
+  {
+    "code": "PC1",
+    "description": "PRINS CHRISTIAN SUND"
+  },
+  {
+    "code": "PC3",
+    "description": "PRINS CHRISTIAN SUND"
+  },
+  {
+    "code": "PC4",
+    "description": "PRINCE CHARLES ISLAND"
+  },
+  {
+    "code": "PCN",
+    "description": "PORT CANAVERAL"
+  },
+  {
+    "code": "PCO",
+    "description": "PUNTA COLORADA"
+  },
+  {
+    "code": "PCS",
+    "description": "Prince Christian Sound"
+  },
+  {
+    "code": "PE1",
+    "description": "PEEL"
+  },
+  {
+    "code": "PI2",
+    "description": "PUNCET ISLAND"
+  },
+  {
+    "code": "PL1",
+    "description": "PLENEAU ISLAND"
+  },
+  {
+    "code": "PL2",
+    "description": "PLAYA MUERTO"
+  },
+  {
+    "code": "PLN",
+    "description": "PORT ELLEN"
+  },
+  {
+    "code": "PO1",
+    "description": "POLARSTARODDEN"
+  },
+  {
+    "code": "PP1",
+    "description": "Puerto Piña, Panama"
+  },
+  {
+    "code": "PR1",
+    "description": "PRION ISLAND"
+  },
+  {
+    "code": "PRM",
+    "description": "PORTIMAO"
+  },
+  {
+    "code": "PS1",
+    "description": "PENOLA STRAIT"
+  },
+  {
+    "code": "PWO",
+    "description": "POWELL ISLAND"
+  },
+  {
+    "code": "R1F",
+    "description": "RAUDFJORDEN"
+  },
+  {
+    "code": "RDN",
+    "description": "Renodden, Greenland"
+  },
+  {
+    "code": "RE1",
+    "description": "RENNESØY"
+  },
+  {
+    "code": "RI2",
+    "description": "RAMSEY ISLAND"
+  },
+  {
+    "code": "RND",
+    "description": "Runde, Norway"
+  },
+  {
+    "code": "RO2",
+    "description": "RØDEØ"
+  },
+  {
+    "code": "RP1",
+    "description": "RØDE PYNT"
+  },
+  {
+    "code": "S1S",
+    "description": "SCORESBYSUND"
+  },
+  {
+    "code": "SA2",
+    "description": "SUA ATACAMES"
+  },
+  {
+    "code": "SAI",
+    "description": "SAN ANDREAS ISLAND"
+  },
+  {
+    "code": "SB1",
+    "description": "SKANSEBUKTA"
+  },
+  {
+    "code": "SE1",
+    "description": "HAMN (SENJA)"
+  },
+  {
+    "code": "SEN",
+    "description": "Svartisen, Holandsfjord"
+  },
+  {
+    "code": "SF3",
+    "description": "ST. JONSFJORDEN"
+  },
+  {
+    "code": "SH2",
+    "description": "SHIANT ISLES"
+  },
+  {
+    "code": "SI2",
+    "description": "SIGNEY ISLAND"
+  },
+  {
+    "code": "SK2",
+    "description": "Skjolden"
+  },
+  {
+    "code": "SK3",
+    "description": "SYDKAP"
+  },
+  {
+    "code": "SKA",
+    "description": "SKAGEN"
+  },
+  {
+    "code": "SMO",
+    "description": "SMÖGEN"
+  },
+  {
+    "code": "SN1",
+    "description": "Sundal"
+  },
+  {
+    "code": "SO4",
+    "description": "SOUND OF MULL"
+  },
+  {
+    "code": "SRK",
+    "description": "SARK, CHANNEL ISLANDS"
+  },
+  {
+    "code": "SS1",
+    "description": "SANDNESSJØEN"
+  },
+  {
+    "code": "SS2",
+    "description": "SOUTH SHETLAND"
+  },
+  {
+    "code": "ST1",
+    "description": "STRALSUND"
+  },
+  {
+    "code": "STA",
+    "description": "ST. ANTHONY"
+  },
+  {
+    "code": "STP",
+    "description": "ST. PETERSBURG"
+  },
+  {
+    "code": "SU1",
+    "description": "SUNDODDEN"
+  },
+  {
+    "code": "TOR",
+    "description": "TORSHAVN, FÆRØYENE"
+  },
+  {
+    "code": "TP1",
+    "description": "Torngat National Park"
+  },
+  {
+    "code": "TR1",
+    "description": "TRESHNISH ISLES"
+  },
+  {
+    "code": "TRÆ",
+    "description": "TRÆNA"
+  },
+  {
+    "code": "TU1",
+    "description": "TUSKET ISLAND"
+  },
+  {
+    "code": "TX1",
+    "description": "TEXAS BAR"
+  },
+  {
+    "code": "VÄ1",
+    "description": "VÄDERÖARNA"
+  },
+  {
+    "code": "VS1",
+    "description": "VATERSAY"
+  },
+  {
+    "code": "WBA",
+    "description": "WILHELMINA BAY"
+  },
+  {
+    "code": "WFJ",
+    "description": "Woodfjorden, Svalbard"
+  },
+  {
+    "code": "WHA",
+    "description": "WHALERS BAY"
+  },
+  {
+    "code": "WHB",
+    "description": "WILLIAM HENRY BAY"
+  },
+  {
+    "code": "WIL",
+    "description": "WILSON APT"
+  },
+  {
+    "code": "YN1",
+    "description": "YTRE NORSKØYA"
+  },
+  {
+    "code": "YSA",
+    "description": "Sable Island"
+  },
+  {
+    "code": "ZEE",
+    "description": "ZEEBRUGGE"
+  }
+]

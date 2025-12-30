@@ -1,0 +1,14 @@
+{
+  "name": "@api-sdk/js-validator",
+  "version": "1.0.0",
+  "description": "Validation tool for API SDK JavaScript package",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "validate": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
