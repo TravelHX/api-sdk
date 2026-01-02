@@ -18,3 +18,4 @@ __exportStar(require("./api-sdk"), exports);
 __exportStar(require("./interfaces/IFlatFileReader"), exports);
 __exportStar(require("./errors/FileReadingErrors"), exports);
 __exportStar(require("./utils/PathValidator"), exports);
+__exportStar(require("./FlatFileReader"), exports);

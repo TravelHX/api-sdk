@@ -10,6 +10,9 @@ A cross-platform SDK that abstracts calls to both flat file storage (series of J
 - JavaScript SDK distributed as npm package
 - Test infrastructure for both platforms
 - Internal console applications (.NET and Node.js) for validation and testing
+- Interactive console application that starts a test run
+- Test run ingests test data from the data folder (configurable via config.json)
+- Test run outputs to console every call and response
 
 ### Flat File Support
 - Ability to read from flat file storage (series of JSON files)

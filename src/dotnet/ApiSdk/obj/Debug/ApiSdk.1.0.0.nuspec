@@ -8,7 +8,7 @@
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <description>Cross-platform SDK that abstracts calls to both flat file storage (series of JSON files) and an OTA API</description>
     <tags>api sdk ota json</tags>
-    <repository type="git" url="https://github.com/your-org/api-sdk" commit="9cd0fb58f86d493a030ddbb77fabfa3b4afadbde" />
+    <repository type="git" url="https://github.com/your-org/api-sdk" commit="18c37ae28d6ec8988283de9b8ba5672a56011592" />
     <dependencies>
       <group targetFramework="net9.0" />
     </dependencies>

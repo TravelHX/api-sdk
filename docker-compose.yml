@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  testrunner-dotnet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: api-sdk-testrunner:dotnet
+    container_name: api-sdk-testrunner-dotnet
+    volumes:
+      - ./data:/app/data:ro
+      - ./config.json:/app/config.json:ro
+    stdin_open: true
+    tty: true
+    entrypoint: ["dotnet"]
+    command: ["/app/dotnet-testrunner/ApiSdk.TestRunner.dll"]
+
+  testrunner-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: api-sdk-testrunner:node
+    container_name: api-sdk-testrunner-node
+    volumes:
+      - ./data:/app/data:ro
+      - ./config.json:/app/config.json:ro
+    stdin_open: true
+    tty: true
+    entrypoint: ["node"]
+    command: ["/app/js-testrunner/test-runner.js"]
+

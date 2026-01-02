@@ -1,3 +1,9 @@
+import { IFlatFileReader } from './interfaces/IFlatFileReader';
 export declare class ApiSdk {
-    constructor();
+    private readonly _fileReader;
+    constructor(fileReader?: IFlatFileReader);
+    /**
+     * Gets the file reader instance
+     */
+    get fileReader(): IFlatFileReader;
 }

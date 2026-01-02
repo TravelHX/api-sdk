@@ -2,9 +2,16 @@ namespace ApiSdk;
 
 public class ApiSdk
 {
-    public ApiSdk()
+    private readonly IFlatFileReader _fileReader;
+
+    public ApiSdk(IFlatFileReader? fileReader = null)
     {
-        // SDK initialization
+        _fileReader = fileReader ?? new FlatFileReader();
     }
+
+    /// <summary>
+    /// Gets the file reader instance
+    /// </summary>
+    public IFlatFileReader FileReader => _fileReader;
 }
 

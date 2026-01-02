@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "validate": "node index.js"
+    "validate": "node index.js",
+    "test-runner": "node test-runner.js"
   },
   "keywords": [],
   "author": "",

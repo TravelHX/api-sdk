@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Cross-platform SDK that abstracts calls to both flat file storage (series of JSON" +
     " files) and an OTA API"))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9cd0fb58f86d493a030ddbb77fabfa3b4afadbde")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+18c37ae28d6ec8988283de9b8ba5672a56011592")]
 [assembly: System.Reflection.AssemblyProductAttribute("ApiSdk")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ApiSdk")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

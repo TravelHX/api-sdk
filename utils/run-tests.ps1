@@ -18,7 +18,8 @@ Write-Host "----------------------------------------" -ForegroundColor Yellow
 Write-Host ""
 
 Push-Location $rootPath
-dotnet test $dotnetTestPath --verbosity normal
+# Use -m:1 to avoid Add-Content file locking issues in PowerShell 5.1
+dotnet test $dotnetTestPath --verbosity normal -m:1
 $dotnetExitCode = $LASTEXITCODE
 Pop-Location
 

@@ -1,0 +1,21 @@
+{
+  "name": "api-sdk",
+  "version": "1.0.0",
+  "description": "Cross-platform SDK that abstracts calls to both flat file storage (series of JSON files) and an OTA API",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix src/js",
+    "build:js": "npm run build --prefix src/js",
+    "test": "npm test --prefix test/js",
+    "test:js": "npm test --prefix test/js"
+  },
+  "keywords": [
+    "api",
+    "sdk",
+    "ota",
+    "json"
+  ],
+  "author": "API SDK Team",
+  "license": "MIT"
+}
+

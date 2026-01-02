@@ -21,6 +21,18 @@
 [ x ] : 1.3.3 Implement basic validation tests in both console apps
 [ x ] : 1.3.4 Configure build scripts to compile and run validation apps
 
+### 1.4 Interactive Test Runner Application
+[ x ] : 1.4.1 Create interactive console application for test execution
+[ x ] : 1.4.2 Design config.json structure for test data configuration
+[ x ] : 1.4.3 Implement config.json parsing and validation
+[ x ] : 1.4.4 Implement test data ingestion from data folder based on config
+[ x ] : 1.4.5 Implement console output for every call and response
+[ x ] : 1.4.6 Add interactive menu/commands for starting test runs
+[ x ] : 1.4.7 Create .NET version of interactive test runner
+[ x ] : 1.4.8 Create Node.js version of interactive test runner
+[ x ] : 1.4.9 Add error handling and logging for test execution
+[ x ] : 1.4.10 Create sample config.json with test data paths
+
 ## Phase 2: Flat File Reading
 
 ### 2.1 File Reading Interface
@@ -29,21 +41,21 @@
 [ x ] : 2.1.3 Create error handling for file operations
 
 ### 2.2 .NET Implementation
-[   ] : 2.2.1 Implement file reading functionality in .NET SDK
-[   ] : 2.2.2 Add path validation and error handling
-[   ] : 2.2.3 Implement JSON file parsing and deserialization
-[   ] : 2.2.4 Create unit tests for file reading operations
+[ x ] : 2.2.1 Implement file reading functionality in .NET SDK
+[ x ] : 2.2.2 Add path validation and error handling
+[ x ] : 2.2.3 Implement JSON file parsing and deserialization
+[ x ] : 2.2.4 Create unit tests for file reading operations
 
 ### 2.3 JavaScript Implementation
-[   ] : 2.3.1 Implement file reading functionality in JavaScript SDK
-[   ] : 2.3.2 Add path validation and error handling
-[   ] : 2.3.3 Implement JSON file parsing
-[   ] : 2.3.4 Create unit tests for file reading operations
+[ x ] : 2.3.1 Implement file reading functionality in JavaScript SDK
+[ x ] : 2.3.2 Add path validation and error handling
+[ x ] : 2.3.3 Implement JSON file parsing
+[ x ] : 2.3.4 Create unit tests for file reading operations
 
 ### 2.4 Integration Testing
-[   ] : 2.4.1 Test file reading with .NET console app
-[   ] : 2.4.2 Test file reading with Node.js console app
-[   ] : 2.4.3 Validate error handling and edge cases
+[ x ] : 2.4.1 Test file reading with .NET console app
+[ x ] : 2.4.2 Test file reading with Node.js console app
+[ x ] : 2.4.3 Validate error handling and edge cases
 
 ## Phase 3: OTA API Integration
 

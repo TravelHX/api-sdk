@@ -1,0 +1,38 @@
+{
+  "testData": {
+    "basePath": "data/FlatFileSample/flatfiles_dev",
+    "files": [
+      {
+        "name": "voyages",
+        "path": "RefData/voyages.json",
+        "description": "Voyages reference data"
+      },
+      {
+        "name": "ships",
+        "path": "RefData/ships.json",
+        "description": "Ships reference data"
+      },
+      {
+        "name": "excursion",
+        "path": "RefData/excursion.json",
+        "description": "Excursion reference data"
+      },
+      {
+        "name": "portlist",
+        "path": "RefData/portlist.json",
+        "description": "Port list reference data"
+      },
+      {
+        "name": "cabingrades",
+        "path": "RefData/cabingrades.json",
+        "description": "Cabin grades reference data"
+      }
+    ]
+  },
+  "output": {
+    "showCallDetails": true,
+    "showResponseDetails": true,
+    "showTiming": true
+  }
+}
+
