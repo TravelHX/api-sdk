@@ -1,2 +1,62 @@
-agents.md
+# .NET build outputs
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+*.nupkg
+*.nuspec
+*.deps.json
+*.runtimeconfig.json
+*.assets.cache
+*.csproj.nuget.dgspec.json
+*.csproj.nuget.g.props
+*.csproj.nuget.g.targets
+*.AssemblyInfo.cs
+*.AssemblyInfoInputs.cache
+*.GeneratedMSBuildEditorConfig.editorconfig
+*.GlobalUsings.g.cs
+*.csproj.CoreCompileInputs.cache
+*.csproj.FileListAbsolute.txt
+*.genruntimeconfig.cache
+*.sourcelink.json
+*.Up2Date
+project.assets.json
+project.nuget.cache
+apphost.exe
+testhost.dll
+testhost.exe
 
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Build results
+[Bb]uild/
+[Dd]ist/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
