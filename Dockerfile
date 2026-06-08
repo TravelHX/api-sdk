@@ -68,11 +68,12 @@ COPY --from=node-build /src/src/js/package.json /app/js-sdk/
 # Copy Node.js Test Runner files (node_modules included if it exists)
 COPY --from=node-build /src/utils/js /app/js-testrunner
 
-# Create directory structure and symlink so test-runner can access SDK
-# The test-runner imports from '../../src/js/dist/api-sdk.js'
-# So we need: /app/js-testrunner/../../src/js/dist -> /app/js-sdk/dist
-RUN mkdir -p /app/src/js && \
-    ln -s /app/js-sdk/dist /app/src/js/dist || true
+# Make the SDK importable as the '@api-sdk/js' package.
+# SDKCLI.js imports from '@api-sdk/js', so node_modules/@api-sdk/js must
+# resolve to the built SDK package (dist + package.json at /app/js-sdk).
+RUN mkdir -p /app/js-testrunner/node_modules/@api-sdk && \
+    rm -rf /app/js-testrunner/node_modules/@api-sdk/js && \
+    ln -s /app/js-sdk /app/js-testrunner/node_modules/@api-sdk/js
 
 # Copy data and config
 COPY data/ /app/data/
