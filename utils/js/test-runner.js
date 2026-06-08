@@ -50,8 +50,9 @@ function printMenu(selectedSuite) {
     console.log('  3 - Run .Net SDK against flat file suite');
     console.log('  4 - Run NodeJS SDK against flat file suite');
     console.log('  5 - Exit');
+    console.log('  6 - Browse Voyage Data (in-memory)');
     console.log();
-    process.stdout.write('Enter command (0-5): ');
+    process.stdout.write('Enter command (0-6): ');
 }
 
 function listTestFiles(config) {
@@ -407,6 +408,423 @@ async function runNodeJsSdkSuite(selectedSuite, config, sdk) {
     console.log();
 }
 
+// ---------------------------------------------------------------------------
+// Option 6: in-memory voyage browsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Reads a single line of input from stdin.
+ */
+function readLine() {
+    return new Promise((resolve) => {
+        process.stdin.once('data', (data) => resolve(data.toString().trim()));
+    });
+}
+
+/**
+ * Source-market TourCodes are prefixed with "_@" before the actual code,
+ * e.g. "_@SCGALE-280209". Voyage travelSuggestionCodes have no such prefix.
+ */
+function stripTourCode(tourCode) {
+    return (tourCode || '').replace(/^_@/, '');
+}
+
+/**
+ * travelSuggestionCodes / TourCodes end in a YYMMDD departure stamp,
+ * e.g. "SCGALEMAC-260403" -> 2026-04-03. Used as a fallback date when a
+ * code has no matching source-market rows.
+ */
+function parseDepartureDateFromCode(code) {
+    const m = /-(\d{6})$/.exec(code || '');
+    if (!m) return null;
+    return `20${m[1].slice(0, 2)}-${m[1].slice(2, 4)}-${m[1].slice(4, 6)}`;
+}
+
+function formatPrice(value) {
+    const n = parseFloat(value);
+    if (isNaN(n)) return null;
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Wraps text to a max line width for readable terminal output.
+ */
+function wrapText(text, width = 76) {
+    const words = String(text).split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+        if (line && (line.length + 1 + word.length) > width) {
+            lines.push(line);
+            line = word;
+        } else {
+            line = line ? `${line} ${word}` : word;
+        }
+    }
+    if (line) lines.push(line);
+    return lines;
+}
+
+/**
+ * Loads voyages and every source-market rate file into memory on startup,
+ * indexing rate rows by their (stripped) TourCode so they can be mapped back
+ * to a voyage's travelSuggestionCodes.
+ */
+async function loadInMemoryData(config, sdk, projectRoot) {
+    const basePath = config?.testData?.basePath || '';
+    const refDataDir = path.resolve(path.join(projectRoot, basePath, 'RefData'));
+
+    console.log();
+    console.log('========================================');
+    console.log('Loading in-memory data...');
+    console.log('========================================');
+
+    const startTime = Date.now();
+    const memory = { voyages: [], rateMap: {}, stats: {} };
+
+    // 1. Load voyages
+    process.stdout.write('  Loading voyages... ');
+    try {
+        memory.voyages = await sdk.fileReader.readFileAsJson(path.join(refDataDir, 'voyages.json'));
+        console.log(`\x1b[32m${memory.voyages.length} voyages\x1b[0m`);
+    } catch (ex) {
+        console.log(`\x1b[31mFAILED: ${ex.message}\x1b[0m`);
+        memory.voyages = [];
+    }
+
+    // 1b. Load cabin grade descriptions, indexed by grade code (= source-market Category).
+    // Descriptions vary per ship; the ship is the first two letters of the tour code.
+    process.stdout.write('  Loading cabin grades... ');
+    memory.cabinGrades = {};
+    try {
+        const grades = await sdk.fileReader.readFileAsJson(path.join(refDataDir, 'cabingrades.json'));
+        for (const g of grades) {
+            if (!g.code) continue;
+            const byShip = {};
+            for (const sd of (g.shipDescriptions || [])) {
+                const ship = (sd.shipCode || '').trim();
+                const d = (sd.description || '').trim();
+                if (!d) continue;
+                if (!byShip[ship]) byShip[ship] = [];
+                if (!byShip[ship].includes(d)) byShip[ship].push(d);
+            }
+            memory.cabinGrades[g.code] = byShip;
+        }
+        console.log(`\x1b[32m${Object.keys(memory.cabinGrades).length} grades\x1b[0m`);
+    } catch (ex) {
+        console.log(`\x1b[31mFAILED: ${ex.message}\x1b[0m`);
+    }
+
+    // 2. Discover and index every source-market rate file by TourCode
+    let rateFiles = [];
+    try {
+        rateFiles = fs.readdirSync(refDataDir)
+            .filter((f) => /^SourceMarket_.*_seaware\.json$/.test(f))
+            .sort();
+    } catch (ex) {
+        console.log(`  \x1b[31mCould not list source market files: ${ex.message}\x1b[0m`);
+    }
+
+    console.log(`  Mapping ${rateFiles.length} source market file(s) by TourCode...`);
+    let totalRows = 0;
+    for (let i = 0; i < rateFiles.length; i++) {
+        const file = rateFiles[i];
+        process.stdout.write(`    [${i + 1}/${rateFiles.length}] ${file} ... `);
+        try {
+            const rows = await sdk.fileReader.readFileAsJson(path.join(refDataDir, file));
+            let count = 0;
+            for (const row of rows) {
+                const code = stripTourCode(row.TourCode);
+                if (!code) continue;
+                if (!memory.rateMap[code]) memory.rateMap[code] = [];
+                memory.rateMap[code].push(row);
+                count++;
+            }
+            totalRows += count;
+            console.log(`\x1b[32m${count} rates\x1b[0m`);
+        } catch (ex) {
+            console.log(`\x1b[31mFAILED: ${ex.message}\x1b[0m`);
+        }
+    }
+
+    const duration = Date.now() - startTime;
+    memory.stats = {
+        voyageCount: memory.voyages.length,
+        tourCodeCount: Object.keys(memory.rateMap).length,
+        rateRowCount: totalRows,
+        durationMs: duration,
+    };
+
+    console.log();
+    console.log(`  \x1b[36mIndexed ${memory.stats.tourCodeCount} tour codes from ${totalRows} rate rows.\x1b[0m`);
+    console.log(`  Done in ${duration} ms.`);
+    console.log();
+    console.log('Press any key to continue...');
+    await waitForInput();
+
+    return memory;
+}
+
+/**
+ * For a voyage, resolves each travelSuggestionCode to its source-market rows
+ * and summarizes departures (date range + cheapest double rate per currency).
+ */
+function buildVoyageDepartures(voyage, rateMap) {
+    const codes = voyage.travelSuggestionCodes || [];
+    const departures = codes.map((code) => {
+        const rows = rateMap[code] || [];
+        const startDate = rows.length ? rows[0].TourStartDate : parseDepartureDateFromCode(code);
+        const endDate = rows.length ? rows[0].TourEndDate : null;
+
+        // cheapest double-occupancy rate per currency
+        const byCurrency = {};
+        for (const r of rows) {
+            const cur = r.Currency || '?';
+            const price = parseFloat(r.Rate_Dbl);
+            if (isNaN(price)) continue;
+            if (byCurrency[cur] === undefined || price < byCurrency[cur]) {
+                byCurrency[cur] = price;
+            }
+        }
+        const cabinCount = new Set(rows.map((r) => r.Category).filter(Boolean)).size;
+        return { code, startDate, endDate, rateCount: rows.length, cabinCount, byCurrency };
+    });
+
+    // Filter out departures that have already passed (date before today).
+    // Departures with no parseable date are kept so nothing is silently dropped.
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = departures.filter((d) => !d.startDate || d.startDate >= today);
+
+    upcoming.sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    return upcoming;
+}
+
+function printVoyageHeader(voyage) {
+    console.log();
+    console.log('========================================');
+    console.log(`Voyage: ${voyage.heading || '(no heading)'}`);
+    console.log('========================================');
+    if (voyage.durationText) console.log(`Duration: ${voyage.durationText}`);
+
+    const description = (voyage.intro || '').trim();
+    if (description) {
+        console.log();
+        console.log('Description:');
+        for (const line of wrapText(description)) {
+            console.log(`  ${line}`);
+        }
+    }
+
+    const sellingPoints = (voyage.sellingPoints || []).filter((s) => s && s.trim());
+    if (sellingPoints.length > 0) {
+        console.log();
+        console.log('Selling Points:');
+        for (const point of sellingPoints) {
+            const lines = wrapText(point.trim(), 72);
+            console.log(`  - ${lines[0]}`);
+            for (const cont of lines.slice(1)) {
+                console.log(`    ${cont}`);
+            }
+        }
+    }
+}
+
+/**
+ * Formats a {currency: amount} map into wrapped, aligned price lines.
+ */
+function formatPriceLines(label, priceMap, indent) {
+    const currencies = Object.keys(priceMap).sort();
+    if (currencies.length === 0) return [`${indent}${label} n/a`];
+
+    const parts = currencies.map((c) => `${c} ${formatPrice(priceMap[c])}`);
+    const lines = [];
+    let line = '';
+    const max = 60;
+    for (const part of parts) {
+        if (line && (line.length + 3 + part.length) > max) {
+            lines.push(line);
+            line = part;
+        } else {
+            line = line ? `${line}   ${part}` : part;
+        }
+    }
+    if (line) lines.push(line);
+
+    const pad = ' '.repeat(label.length + 1);
+    return lines.map((l, i) => `${indent}${i === 0 ? `${label} ` : pad}${l}`);
+}
+
+/**
+ * Resolves the cabin-grade description for a grade code on a given ship
+ * (ship = first two letters of the tour code). Falls back to any ship's
+ * description if the exact ship isn't found.
+ */
+function resolveCabinDescriptions(memory, gradeCode, shipCode) {
+    const byShip = memory.cabinGrades?.[gradeCode];
+    if (!byShip) return [];
+    if (shipCode && byShip[shipCode] && byShip[shipCode].length) return byShip[shipCode];
+    // fallback: distinct descriptions across all ships
+    const all = [];
+    for (const descs of Object.values(byShip)) {
+        for (const d of descs) if (!all.includes(d)) all.push(d);
+    }
+    return all;
+}
+
+async function selectDeparture(voyage, memory) {
+    const departures = buildVoyageDepartures(voyage, memory.rateMap);
+
+    let selecting = true;
+    while (selecting) {
+        printHeader();
+        printVoyageHeader(voyage);
+        console.log();
+
+        if (departures.length === 0) {
+            console.log('No upcoming departures found for this voyage.');
+            console.log();
+            console.log('Press any key to go back...');
+            await waitForInput();
+            return;
+        }
+
+        console.log(`Departures (${departures.length}) - select one to view cabins:`);
+        console.log();
+        departures.forEach((d, i) => {
+            const dateRange = d.endDate ? `${d.startDate} -> ${d.endDate}` : `${d.startDate}`;
+            const grades = d.cabinCount > 0 ? `${d.cabinCount} cabin grade(s)` : 'no cabins/pricing';
+            console.log(`  ${String(i + 1).padStart(2)}. ${dateRange}   \x1b[90m(${d.code})  [${grades}]\x1b[0m`);
+        });
+        console.log();
+        process.stdout.write('Enter departure number (or 0 to go back): ');
+
+        const input = await readLine();
+        if (input === '0' || input === '') {
+            selecting = false;
+            break;
+        }
+
+        const n = parseInt(input, 10);
+        if (isNaN(n) || n < 1 || n > departures.length) {
+            console.log('Invalid departure number.');
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            continue;
+        }
+
+        await showCabins(voyage, departures[n - 1], memory);
+    }
+}
+
+async function showCabins(voyage, departure, memory) {
+    const rows = memory.rateMap[departure.code] || [];
+    const shipCode = (departure.code || '').slice(0, 2);
+
+    // group rows by cabin Category (one row per currency per cabin)
+    const byCategory = {};
+    for (const r of rows) {
+        const cat = r.Category || '?';
+        if (!byCategory[cat]) {
+            byCategory[cat] = {
+                category: cat,
+                superCategory: r.SuperCategory || '',
+                available: r.AvailableCabins,
+                dbl: {},
+                sgl: {},
+            };
+        }
+        const entry = byCategory[cat];
+        const cur = r.Currency || '?';
+        const dbl = parseFloat(r.Rate_Dbl);
+        const sgl = parseFloat(r.Rate_Sgl);
+        if (!isNaN(dbl)) entry.dbl[cur] = dbl;
+        if (!isNaN(sgl)) entry.sgl[cur] = sgl;
+    }
+
+    const cabins = Object.values(byCategory).sort((a, b) => a.category.localeCompare(b.category));
+
+    printHeader();
+    console.log('========================================');
+    console.log(`Voyage: ${voyage.heading || '(no heading)'}`);
+    const dateRange = departure.endDate ? `${departure.startDate} -> ${departure.endDate}` : `${departure.startDate}`;
+    console.log(`Departure: ${dateRange}   (${departure.code})  Ship: ${shipCode}`);
+    console.log('========================================');
+    console.log();
+
+    if (cabins.length === 0) {
+        console.log('  No cabins or pricing available for this departure.');
+        console.log();
+        console.log('Press any key to go back...');
+        await waitForInput();
+        return;
+    }
+
+    console.log(`Cabins (${cabins.length}):`);
+    console.log();
+    cabins.forEach((cabin, i) => {
+        const name = cabin.superCategory ? `${cabin.category} - ${cabin.superCategory}` : cabin.category;
+        console.log(`  ${String(i + 1).padStart(2)}. ${name}`);
+
+        const descs = resolveCabinDescriptions(memory, cabin.category, shipCode);
+        if (descs.length > 0) {
+            for (const desc of descs) {
+                for (const line of wrapText(desc, 70)) {
+                    console.log(`        ${line}`);
+                }
+            }
+        } else {
+            console.log('        \x1b[90m(no cabin description available)\x1b[0m');
+        }
+
+        if (cabin.available !== undefined && cabin.available !== null) {
+            console.log(`        Available cabins: ${cabin.available}`);
+        }
+        for (const l of formatPriceLines('Double (pp):', cabin.dbl, '        ')) console.log(l);
+        for (const l of formatPriceLines('Single:     ', cabin.sgl, '        ')) console.log(l);
+        console.log();
+    });
+
+    console.log('Press any key to go back...');
+    await waitForInput();
+}
+
+async function browseDataInMemory(memory) {
+    if (!memory || !memory.voyages || memory.voyages.length === 0) {
+        console.log('No in-memory voyage data available.');
+        console.log('Press any key to continue...');
+        await waitForInput();
+        return;
+    }
+
+    let browsing = true;
+    while (browsing) {
+        printHeader();
+        console.log('Browse Voyage Data (in-memory)');
+        console.log('------------------------------');
+        console.log(`Loaded ${memory.stats.voyageCount} voyages, ${memory.stats.tourCodeCount} tour codes, ${memory.stats.rateRowCount} rate rows.`);
+        console.log();
+        memory.voyages.forEach((v, i) => {
+            console.log(`  ${String(i + 1).padStart(3)}. ${v.heading || '(no heading)'}`);
+        });
+        console.log();
+        process.stdout.write('Enter voyage number (or 0 to go back): ');
+
+        const input = await readLine();
+        if (input === '0' || input === '') {
+            browsing = false;
+            break;
+        }
+
+        const n = parseInt(input, 10);
+        if (isNaN(n) || n < 1 || n > memory.voyages.length) {
+            console.log('Invalid voyage number.');
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            continue;
+        }
+
+        await selectDeparture(memory.voyages[n - 1], memory);
+    }
+}
+
 async function main() {
     try {
         const projectRoot = getProjectRoot();
@@ -421,6 +839,9 @@ async function main() {
         // Set up stdin for reading
         process.stdin.setEncoding('utf8');
         process.stdin.resume();
+
+        // Load and index data into memory on startup (voyages <-> source market)
+        const memory = await loadInMemoryData(config, sdk, projectRoot);
 
         while (running) {
             printHeader();
@@ -467,6 +888,10 @@ async function main() {
                     running = false;
                     console.log('Exiting...');
                     process.exit(0);
+                    break;
+
+                case '6':
+                    await browseDataInMemory(memory);
                     break;
 
                 default:
