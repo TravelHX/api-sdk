@@ -1,0 +1,63 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0C88DD14-F956-CE84-757C-A364CCF449FC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "utils", "utils", "{F904F79D-75D5-4918-E32F-904F3CF671B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotnet", "dotnet", "{AE277B8F-98EF-B943-E4C2-C790275613CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.Tests", "test\dotnet\ApiSdk.Tests\ApiSdk.Tests.csproj", "{0B06F2DF-AC33-E24C-8624-8CB28E62B354}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotnet", "dotnet", "{FABBC840-389A-6787-F7FD-160453A68C20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.TestRunner", "utils\dotnet\ApiSdk.TestRunner\ApiSdk.TestRunner.csproj", "{391CECD6-6459-4709-E45E-408DBE9EDEC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.Validator", "utils\dotnet\ApiSdk.Validator\ApiSdk.Validator.csproj", "{5F123F36-85AD-9FA8-F082-74F37CF6316E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotnet", "dotnet", "{204ECC8A-4C8C-06A8-7EEC-D568B118FA74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk", "src\dotnet\ApiSdk\ApiSdk.csproj", "{D698E4E8-1D35-A400-97EC-6A179CF3F00F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0B06F2DF-AC33-E24C-8624-8CB28E62B354}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B06F2DF-AC33-E24C-8624-8CB28E62B354}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B06F2DF-AC33-E24C-8624-8CB28E62B354}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B06F2DF-AC33-E24C-8624-8CB28E62B354}.Release|Any CPU.Build.0 = Release|Any CPU
+		{391CECD6-6459-4709-E45E-408DBE9EDEC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{391CECD6-6459-4709-E45E-408DBE9EDEC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{391CECD6-6459-4709-E45E-408DBE9EDEC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{391CECD6-6459-4709-E45E-408DBE9EDEC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F123F36-85AD-9FA8-F082-74F37CF6316E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F123F36-85AD-9FA8-F082-74F37CF6316E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F123F36-85AD-9FA8-F082-74F37CF6316E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F123F36-85AD-9FA8-F082-74F37CF6316E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D698E4E8-1D35-A400-97EC-6A179CF3F00F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D698E4E8-1D35-A400-97EC-6A179CF3F00F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D698E4E8-1D35-A400-97EC-6A179CF3F00F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D698E4E8-1D35-A400-97EC-6A179CF3F00F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AE277B8F-98EF-B943-E4C2-C790275613CB} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{0B06F2DF-AC33-E24C-8624-8CB28E62B354} = {AE277B8F-98EF-B943-E4C2-C790275613CB}
+		{FABBC840-389A-6787-F7FD-160453A68C20} = {F904F79D-75D5-4918-E32F-904F3CF671B2}
+		{391CECD6-6459-4709-E45E-408DBE9EDEC3} = {FABBC840-389A-6787-F7FD-160453A68C20}
+		{5F123F36-85AD-9FA8-F082-74F37CF6316E} = {FABBC840-389A-6787-F7FD-160453A68C20}
+		{204ECC8A-4C8C-06A8-7EEC-D568B118FA74} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{D698E4E8-1D35-A400-97EC-6A179CF3F00F} = {204ECC8A-4C8C-06A8-7EEC-D568B118FA74}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8B6B30F6-4E81-4620-83A8-93C5933C5460}
+	EndGlobalSection
+EndGlobal

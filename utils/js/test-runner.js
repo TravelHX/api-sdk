@@ -90,7 +90,7 @@ function showConfiguration(config, selectedSuite) {
 async function runTestFile(fileConfig, config, sdk) {
     if (!sdk || !config?.testData) {
         console.log('ERROR: SDK or configuration not initialized');
-        return;
+        return false;
     }
 
     const projectRoot = getProjectRoot();
@@ -108,7 +108,7 @@ async function runTestFile(fileConfig, config, sdk) {
     if (!fs.existsSync(resolvedPath)) {
         console.error(`\x1b[31mERROR: File not found: ${resolvedPath}\x1b[0m`);
         console.log();
-        return;
+        return false;
     }
 
     const startTime = Date.now();
@@ -157,6 +157,8 @@ async function runTestFile(fileConfig, config, sdk) {
         }
 
         console.log('\x1b[32mTEST PASSED\x1b[0m');
+        console.log();
+        return true;
     } catch (ex) {
         const duration = Date.now() - startTime;
         console.log('\x1b[31mRESPONSE:\x1b[0m');
@@ -170,9 +172,9 @@ async function runTestFile(fileConfig, config, sdk) {
         console.log();
 
         console.log('\x1b[31mTEST FAILED\x1b[0m');
+        console.log();
+        return false;
     }
-
-    console.log();
 }
 
 async function runAllTests(config, sdk) {
@@ -191,8 +193,8 @@ async function runAllTests(config, sdk) {
 
     for (const fileConfig of config.testData.files) {
         try {
-            await runTestFile(fileConfig, config, sdk);
-            passed++;
+            const ok = await runTestFile(fileConfig, config, sdk);
+            if (ok) passed++; else failed++;
         } catch (ex) {
             console.error(`\x1b[31mFailed to run test for ${fileConfig.name}: ${ex.message}\x1b[0m`);
             failed++;
@@ -385,8 +387,8 @@ async function runNodeJsSdkSuite(selectedSuite, config, sdk) {
 
     for (const fileConfig of suite.files) {
         try {
-            await runTestFile(fileConfig, config, sdk);
-            passed++;
+            const ok = await runTestFile(fileConfig, config, sdk);
+            if (ok) passed++; else failed++;
         } catch (ex) {
             console.error(`\x1b[31mFailed to process file ${fileConfig.name}: ${ex.message}\x1b[0m`);
             failed++;
