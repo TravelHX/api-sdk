@@ -2,6 +2,8 @@ import { createApiSdk } from '@api-sdk/js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { execFile } from 'child_process';
+import * as tui from './tui.js';
 
 /** @typedef {import('@api-sdk/js').IApiSdk} IApiSdk */
 
@@ -9,262 +11,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function getProjectRoot() {
-    // In Docker, we're at /app/js-testrunner, so go up to /app
-    // In local, we're at utils/js, so go up to repo root
-    if (__dirname.startsWith('/app')) {
-        return '/app';
-    }
+    // In Docker we're at /app/js-testrunner; locally at utils/js.
+    if (__dirname.startsWith('/app')) return '/app';
     return path.resolve(__dirname, '..', '..');
 }
 
 function loadConfig() {
     const configPath = path.join(getProjectRoot(), 'config.json');
-    
     if (!fs.existsSync(configPath)) {
         throw new Error(`Configuration file not found: ${configPath}`);
     }
-
-    const jsonContent = fs.readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(jsonContent);
-
-    if (!config) {
-        throw new Error('Failed to parse configuration file');
-    }
-
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    if (!config) throw new Error('Failed to parse configuration file');
     return config;
 }
 
-function printHeader() {
-    console.clear();
-    console.log('========================================');
-    console.log('API SDK CLI');
-    console.log('========================================');
-    console.log();
-}
+// --- text helpers -----------------------------------------------------------
 
-function printMenu(selectedSuite) {
-    console.log('Available Commands:');
-    console.log('  0 - Show configuration');
-    console.log('  1 - Run All Automated Tests');
-    const suiteDisplay = selectedSuite ? ` (${selectedSuite.basePath || 'default'})` : '';
-    console.log(`  2 - Specify Test File Suite Location / name${suiteDisplay}`);
-    console.log('  3 - Browse data');
-    console.log('  4 - Exit');
-    console.log();
-    process.stdout.write('Enter command (0-4): ');
-}
-
-function listTestFiles(config) {
-    console.log();
-    console.log('Available Test Files:');
-    console.log('---------------------');
-    
-    if (!config?.testData?.files || config.testData.files.length === 0) {
-        console.log('No test files configured.');
-        return;
-    }
-
-    config.testData.files.forEach((file, index) => {
-        console.log(`  ${index + 1}. ${file.name} - ${file.description || 'No description'}`);
-        console.log(`     Path: ${file.path}`);
-    });
-    console.log();
-}
-
-function showConfiguration(config, selectedSuite) {
-    console.log();
-    console.log('Current Configuration:');
-    console.log('---------------------');
-    console.log(`Base Path: ${config?.testData?.basePath}`);
-    console.log(`Show Call Details: ${config?.output?.showCallDetails ?? true}`);
-    console.log(`Show Response Details: ${config?.output?.showResponseDetails ?? true}`);
-    console.log(`Show Timing: ${config?.output?.showTiming ?? true}`);
-    console.log(`Number of Test Files: ${config?.testData?.files?.length ?? 0}`);
-    if (selectedSuite) {
-        console.log(`Selected Test Suite: ${selectedSuite.basePath}`);
-        console.log(`Selected Suite Files: ${selectedSuite.files?.length || 0}`);
-    }
-    console.log();
-}
-
-async function runTestFile(fileConfig, config, sdk) {
-    if (!sdk || !config?.testData) {
-        console.log('ERROR: SDK or configuration not initialized');
-        return false;
-    }
-
-    const projectRoot = getProjectRoot();
-    const fullPath = path.join(projectRoot, config.testData.basePath || '', fileConfig.path || '');
-    const resolvedPath = path.resolve(fullPath);
-
-    console.log();
-    console.log('========================================');
-    console.log(`Running Test: ${fileConfig.name}`);
-    console.log('========================================');
-    console.log(`File Path: ${resolvedPath}`);
-    console.log(`Description: ${fileConfig.description || 'No description'}`);
-    console.log();
-
-    if (!fs.existsSync(resolvedPath)) {
-        console.error(`\x1b[31mERROR: File not found: ${resolvedPath}\x1b[0m`);
-        console.log();
-        return false;
-    }
-
-    const startTime = Date.now();
-
-    try {
-        // Show call details
-        if (config.output?.showCallDetails ?? true) {
-            console.log('\x1b[36mCALL:\x1b[0m');
-            console.log(`  Method: readFile`);
-            console.log(`  File Path: ${resolvedPath}`);
-            console.log(`  Timestamp: ${new Date().toISOString()}`);
-            console.log();
-        }
-
-        // Read file as string
-        const content = await sdk.readFile(resolvedPath);
-        const duration = Date.now() - startTime;
-
-        // Show response details
-        if (config.output?.showResponseDetails ?? true) {
-            console.log('\x1b[32mRESPONSE:\x1b[0m');
-            console.log(`  Status: Success`);
-            console.log(`  Content Length: ${content.length} characters`);
-            
-            if (config.output?.showTiming ?? true) {
-                console.log(`  Duration: ${duration} ms`);
-            }
-            
-            // Show preview of content (first 200 characters)
-            const preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
-            console.log(`  Content Preview: ${preview}`);
-            console.log();
-        }
-
-        // Try to parse as JSON array to show item count
-        try {
-            const parsed = JSON.parse(content);
-            if (Array.isArray(parsed)) {
-                console.log('\x1b[33mPARSED DATA:\x1b[0m');
-                console.log(`  Type: JSON Array`);
-                console.log(`  Item Count: ${parsed.length}`);
-                console.log();
-            }
-        } catch (err) {
-            // Not valid JSON or not an array, that's okay
-        }
-
-        console.log('\x1b[32mTEST PASSED\x1b[0m');
-        console.log();
-        return true;
-    } catch (ex) {
-        const duration = Date.now() - startTime;
-        console.log('\x1b[31mRESPONSE:\x1b[0m');
-        console.log(`  Status: Error`);
-        console.log(`  Error Type: ${ex.constructor.name}`);
-        console.log(`  Error Message: ${ex.message}`);
-        
-        if (config.output?.showTiming ?? true) {
-            console.log(`  Duration: ${duration} ms`);
-        }
-        console.log();
-
-        console.log('\x1b[31mTEST FAILED\x1b[0m');
-        console.log();
-        return false;
-    }
-}
-
-async function runAllTests(config, sdk) {
-    if (!config?.testData?.files || config.testData.files.length === 0) {
-        console.log('No test files configured.');
-        return;
-    }
-
-    console.log();
-    console.log(`Running ${config.testData.files.length} test file(s)...`);
-    console.log();
-
-    const totalStartTime = Date.now();
-    let passed = 0;
-    let failed = 0;
-
-    for (const fileConfig of config.testData.files) {
-        try {
-            const ok = await runTestFile(fileConfig, config, sdk);
-            if (ok) passed++; else failed++;
-        } catch (ex) {
-            console.error(`\x1b[31mFailed to run test for ${fileConfig.name}: ${ex.message}\x1b[0m`);
-            failed++;
-        }
-    }
-
-    const totalDuration = Date.now() - totalStartTime;
-
-    console.log('========================================');
-    console.log('Test Run Summary');
-    console.log('========================================');
-    console.log(`Total Tests: ${config.testData.files.length}`);
-    console.log(`\x1b[32mPassed: ${passed}\x1b[0m`);
-    console.log(`\x1b[31mFailed: ${failed}\x1b[0m`);
-    console.log(`Total Duration: ${totalDuration} ms`);
-    console.log();
-}
-
-function waitForInput() {
-    return new Promise((resolve) => {
-        process.stdin.once('data', () => {
-            resolve();
-        });
-    });
-}
-
-function specifyTestSuite(selectedSuite) {
-    console.log();
-    console.log('Current Test Suite:');
-    console.log('-------------------');
-    if (selectedSuite) {
-        console.log(`Base Path: ${selectedSuite.basePath}`);
-        console.log(`Number of Files: ${selectedSuite.files?.length || 0}`);
-        if (selectedSuite.files && selectedSuite.files.length > 0) {
-            console.log('Files:');
-            selectedSuite.files.forEach((file, index) => {
-                console.log(`  ${index + 1}. ${file.name} - ${file.path}`);
-            });
-        }
-    } else {
-        console.log('No test suite selected.');
-    }
-    console.log();
-    console.log('Note: Currently using the test suite from config.json.');
-    console.log('To change the suite, modify config.json and restart the application.');
-    console.log();
-}
-
-// ---------------------------------------------------------------------------
-// Option 6: browse the SDK's data graph
-// ---------------------------------------------------------------------------
-
-/**
- * Reads a single line of input from stdin.
- */
-function readLine() {
-    return new Promise((resolve) => {
-        process.stdin.once('data', (data) => resolve(data.toString().trim()));
-    });
-}
-
-function formatPrice(value) {
-    const n = parseFloat(value);
-    if (isNaN(n)) return null;
-    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-/**
- * Wraps text to a max line width for readable terminal output.
- */
 function wrapText(text, width = 76) {
     const words = String(text).split(/\s+/).filter(Boolean);
     const lines = [];
@@ -281,97 +44,15 @@ function wrapText(text, width = 76) {
     return lines;
 }
 
-/**
- * Loads the SDK's data graph on startup. File discovery happens here (the SDK
- * stays decoupled from the filesystem); reads and graph construction are the
- * SDK's own async load action.
- */
-async function loadSdkData(config, sdk, projectRoot) {
-    const basePath = config?.testData?.basePath || '';
-    const refDataDir = path.resolve(path.join(projectRoot, basePath, 'RefData'));
-
-    console.log();
-    console.log('========================================');
-    console.log('Loading SDK data...');
-    console.log('========================================');
-
-    const startTime = Date.now();
-
-    // Discover the per-currency source-market files in RefData
-    let sourceMarkets = [];
-    try {
-        sourceMarkets = fs.readdirSync(refDataDir)
-            .filter((f) => /^SourceMarket_.*_seaware\.json$/.test(f))
-            .sort()
-            .map((f) => path.join(refDataDir, f));
-    } catch (ex) {
-        console.log(`  \x1b[31mCould not list source market files: ${ex.message}\x1b[0m`);
-    }
-
-    const sources = {
-        voyages: path.join(refDataDir, 'voyages.json'),
-        ships: path.join(refDataDir, 'ships.json'),
-        cabinGrades: path.join(refDataDir, 'cabingrades.json'),
-        ports: path.join(refDataDir, 'portlist.json'),
-        sourceMarkets,
-    };
-
-    try {
-        await sdk.load(sources, (msg) => console.log(`  ${msg}`));
-    } catch (ex) {
-        console.log(`  \x1b[31mFAILED to load SDK data: ${ex.message}\x1b[0m`);
-    }
-
-    const duration = Date.now() - startTime;
-    if (sdk.isLoaded) {
-        const s = sdk.stats;
-        console.log();
-        console.log(`  \x1b[36m${s.voyageCount} voyages, ${s.shipCount} ships, ${s.cabinGradeCount} cabin grades,\x1b[0m`);
-        console.log(`  \x1b[36m${s.departureCount} departures, ${s.offeringCount} cabin offerings.\x1b[0m`);
-        console.log(`  Done in ${duration} ms.`);
-    }
-    console.log();
-    console.log('Press any key to continue...');
-    await waitForInput();
+function formatPrice(value) {
+    const n = parseFloat(value);
+    if (isNaN(n)) return null;
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function printVoyageHeader(voyage) {
-    console.log();
-    console.log('========================================');
-    console.log(`Voyage: ${voyage.heading || '(no heading)'}`);
-    console.log('========================================');
-    if (voyage.durationText) console.log(`Duration: ${voyage.durationText}`);
-
-    const description = (voyage.intro || '').trim();
-    if (description) {
-        console.log();
-        console.log('Description:');
-        for (const line of wrapText(description)) {
-            console.log(`  ${line}`);
-        }
-    }
-
-    const sellingPoints = (voyage.sellingPoints || []).filter((s) => s && s.trim());
-    if (sellingPoints.length > 0) {
-        console.log();
-        console.log('Selling Points:');
-        for (const point of sellingPoints) {
-            const lines = wrapText(point.trim(), 72);
-            console.log(`  - ${lines[0]}`);
-            for (const cont of lines.slice(1)) {
-                console.log(`    ${cont}`);
-            }
-        }
-    }
-}
-
-/**
- * Formats a {currency: amount} map into wrapped, aligned price lines.
- */
 function formatPriceLines(label, priceMap, indent) {
     const currencies = Object.keys(priceMap).sort();
     if (currencies.length === 0) return [`${indent}${label} n/a`];
-
     const parts = currencies.map((c) => `${c} ${formatPrice(priceMap[c])}`);
     const lines = [];
     let line = '';
@@ -385,227 +66,298 @@ function formatPriceLines(label, priceMap, indent) {
         }
     }
     if (line) lines.push(line);
-
-    const pad = ' '.repeat(label.length + 1);
-    return lines.map((l, i) => `${indent}${i === 0 ? `${label} ` : pad}${l}`);
+    const padded = ' '.repeat(label.length + 1);
+    return lines.map((l, i) => `${indent}${i === 0 ? `${label} ` : padded}${l}`);
 }
 
-async function selectDeparture(voyage) {
-    const today = new Date().toISOString().slice(0, 10);
-    const departures = voyage.upcomingDepartures(today);
+// --- line builders for the views -------------------------------------------
 
-    let selecting = true;
-    while (selecting) {
-        printHeader();
-        printVoyageHeader(voyage);
-        console.log();
+function configLines(config) {
+    const t = config?.testData || {};
+    const o = config?.output || {};
+    const lines = [
+        `Base path:             ${t.basePath}`,
+        `Show call details:     ${o.showCallDetails ?? true}`,
+        `Show response details: ${o.showResponseDetails ?? true}`,
+        `Show timing:           ${o.showTiming ?? true}`,
+        `Test files:            ${t.files?.length ?? 0}`,
+        '',
+    ];
+    (t.files || []).forEach((f, i) => {
+        lines.push(`${i + 1}. ${f.name} — ${f.description || ''}`);
+        lines.push(`     ${f.path}`);
+    });
+    return lines;
+}
 
-        if (departures.length === 0) {
-            console.log('No upcoming departures found for this voyage.');
-            console.log();
-            console.log('Press any key to go back...');
-            await waitForInput();
-            return;
-        }
+function suiteLines(suite) {
+    if (!suite) return ['No test suite selected.'];
+    const lines = [`Base path: ${suite.basePath}`, `Files: ${suite.files?.length || 0}`, ''];
+    (suite.files || []).forEach((f, i) => lines.push(`${i + 1}. ${f.name} — ${f.path}`));
+    lines.push('');
+    lines.push('Note: edit config.json and restart to change the suite.');
+    return lines;
+}
 
-        console.log(`Departures (${departures.length}) - select one to view cabins:`);
-        console.log();
-        departures.forEach((d, i) => {
-            const dateRange = d.endDate ? `${d.date} -> ${d.endDate}` : `${d.date}`;
-            const count = d.cabinGrades.length;
-            const grades = count > 0 ? `${count} cabin grade(s)` : 'no cabins/pricing';
-            console.log(`  ${String(i + 1).padStart(2)}. ${dateRange}   \x1b[90m(${d.code})  [${grades}]\x1b[0m`);
-        });
-        console.log();
-        process.stdout.write('Enter departure number (or 0 to go back): ');
+/**
+ * Runs usage.js directly as a subprocess and returns its output as plain lines.
+ * usage.js is the single source of truth for the example/test suite; we capture
+ * its stdout (stripping colour) rather than importing it — it calls
+ * process.exit(), which would otherwise terminate the CLI.
+ */
+function runUsageSuite() {
+    return new Promise((resolve) => {
+        execFile(
+            process.execPath, // the same node binary running this CLI
+            ['usage.js'],
+            { cwd: __dirname, maxBuffer: 16 * 1024 * 1024 },
+            (err, stdout, stderr) => {
+                const code = err && typeof err.code === 'number' ? err.code : err ? 1 : 0;
+                const text = `${stdout || ''}${stderr ? `\n${stderr}` : ''}`;
+                const lines = text.replace(/\x1b\[[0-9;]*m/g, '').replace(/\s+$/, '').split('\n');
+                resolve({ lines, code });
+            }
+        );
+    });
+}
 
-        const input = await readLine();
-        if (input === '0' || input === '') {
-            selecting = false;
-            break;
-        }
-
-        const n = parseInt(input, 10);
-        if (isNaN(n) || n < 1 || n > departures.length) {
-            console.log('Invalid departure number.');
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            continue;
-        }
-
-        await showCabins(departures[n - 1]);
+function voyageDetail(voyage, today) {
+    const lines = [];
+    if (voyage.durationText) lines.push(`Duration: ${voyage.durationText}`);
+    lines.push(`Upcoming departures: ${voyage.upcomingDepartures(today).length}`);
+    lines.push('');
+    if (voyage.intro) {
+        lines.push('Intro:');
+        for (const l of wrapText(voyage.intro, 40)) lines.push(`  ${l}`);
+        lines.push('');
     }
+    if (voyage.sellingPoints?.length) {
+        lines.push('Selling points:');
+        for (const p of voyage.sellingPoints) {
+            const wrapped = wrapText(p, 38);
+            lines.push(`  • ${wrapped[0]}`);
+            for (const cont of wrapped.slice(1)) lines.push(`    ${cont}`);
+        }
+    }
+    return lines;
 }
 
-async function showCabins(departure) {
-    const voyage = departure.voyage;
+function departureDetail(d) {
+    const lines = [
+        `Code:  ${d.code}`,
+        `Ship:  ${d.ship ? `${d.ship.name} (${d.ship.id})` : d.shipCode}`,
+    ];
+    if (d.endDate) lines.push(`Dates: ${d.date} → ${d.endDate}`);
+    lines.push(`Cabin grades: ${d.cabinGrades.length}`);
+    return lines;
+}
+
+function cabinLines(departure) {
     const ship = departure.ship;
     const cabins = [...departure.offerings].sort((a, b) => a.code.localeCompare(b.code));
-
-    printHeader();
-    console.log('========================================');
-    console.log(`Voyage: ${voyage ? voyage.heading : '(unknown)'}`);
-    const dateRange = departure.endDate ? `${departure.date} -> ${departure.endDate}` : `${departure.date}`;
-    const shipLabel = ship ? `${ship.name} (${ship.id})` : departure.shipCode;
-    console.log(`Departure: ${dateRange}   (${departure.code})  Ship: ${shipLabel}`);
-    console.log('========================================');
-    console.log();
-
-    if (cabins.length === 0) {
-        console.log('  No cabins or pricing available for this departure.');
-        console.log();
-        console.log('Press any key to go back...');
-        await waitForInput();
-        return;
+    const lines = [
+        `Ship:      ${ship ? `${ship.name} (${ship.id})` : departure.shipCode}`,
+        `Departure: ${departure.date}${departure.endDate ? ` → ${departure.endDate}` : ''}   (${departure.code})`,
+        '',
+    ];
+    if (!cabins.length) {
+        lines.push('No cabins or pricing available for this departure.');
+        return lines;
     }
-
-    console.log(`Cabins (${cabins.length}):`);
-    console.log();
-    cabins.forEach((cabin, i) => {
-        const name = cabin.name ? `${cabin.code} - ${cabin.name}` : cabin.code;
-        console.log(`  ${String(i + 1).padStart(2)}. ${name}`);
-
-        const descs = cabin.description;
-        if (descs.length > 0) {
-            for (const desc of descs) {
-                for (const line of wrapText(desc, 70)) {
-                    console.log(`        ${line}`);
-                }
-            }
+    lines.push(`Cabins (${cabins.length}):`);
+    lines.push('');
+    cabins.forEach((c, i) => {
+        lines.push(`${String(i + 1).padStart(2)}. ${c.name ? `${c.code} - ${c.name}` : c.code}`);
+        const descs = c.description;
+        if (descs.length) {
+            for (const d of descs) for (const l of wrapText(d, 72)) lines.push(`      ${l}`);
         } else {
-            console.log('        \x1b[90m(no cabin description available)\x1b[0m');
+            lines.push('      (no cabin description available)');
         }
-
-        if (cabin.availableCabins !== undefined && cabin.availableCabins !== null) {
-            console.log(`        Available cabins: ${cabin.availableCabins}`);
+        if (c.availableCabins !== undefined && c.availableCabins !== null) {
+            lines.push(`      Available cabins: ${c.availableCabins}`);
         }
-
-        // Build {currency: amount} maps from the offering's per-currency prices
         const dbl = {};
         const sgl = {};
-        for (const p of cabin.prices) {
+        for (const p of c.prices) {
             if (p.double !== null) dbl[p.currency] = p.double;
             if (p.single !== null) sgl[p.currency] = p.single;
         }
-        for (const l of formatPriceLines('Double (pp):', dbl, '        ')) console.log(l);
-        for (const l of formatPriceLines('Single:     ', sgl, '        ')) console.log(l);
-        console.log();
+        for (const l of formatPriceLines('Double (pp):', dbl, '      ')) lines.push(l);
+        for (const l of formatPriceLines('Single:     ', sgl, '      ')) lines.push(l);
+        lines.push('');
     });
-
-    console.log('Press any key to go back...');
-    await waitForInput();
+    return lines;
 }
 
-async function browseDataInMemory(sdk) {
-    if (!sdk || !sdk.isLoaded || sdk.voyages.length === 0) {
-        console.log('No SDK data available.');
-        console.log('Press any key to continue...');
-        await waitForInput();
+// --- startup load -----------------------------------------------------------
+
+/**
+ * @param {object} config
+ * @param {IApiSdk} sdk
+ */
+async function loadSdkData(config, sdk, projectRoot) {
+    const basePath = config?.testData?.basePath || '';
+    const refDataDir = path.resolve(path.join(projectRoot, basePath, 'RefData'));
+
+    let sourceMarkets = [];
+    try {
+        sourceMarkets = fs
+            .readdirSync(refDataDir)
+            .filter((f) => /^SourceMarket_.*_seaware\.json$/.test(f))
+            .sort()
+            .map((f) => path.join(refDataDir, f));
+    } catch {
+        /* discovery failure handled below via empty stats */
+    }
+
+    const sources = {
+        voyages: path.join(refDataDir, 'voyages.json'),
+        ships: path.join(refDataDir, 'ships.json'),
+        cabinGrades: path.join(refDataDir, 'cabingrades.json'),
+        ports: path.join(refDataDir, 'portlist.json'),
+        sourceMarkets,
+    };
+
+    const log = [];
+    const onProgress = (msg) => {
+        log.push(msg);
+        tui.render('API SDK CLI — loading', log.slice(-18));
+    };
+
+    try {
+        await sdk.load(sources, onProgress);
+    } catch (ex) {
+        log.push(`FAILED: ${ex.message}`);
+    }
+
+    const s = sdk.stats;
+    tui.render('API SDK CLI — loaded', [
+        ...log.slice(-12),
+        '',
+        `${s.voyageCount} voyages · ${s.shipCount} ships · ${s.cabinGradeCount} cabin grades · ${s.portCount} ports`,
+        `${s.departureCount} departures · ${s.offeringCount} cabin offerings`,
+        '',
+        'Press any key to continue…',
+    ]);
+    await tui.waitKey();
+}
+
+// --- browse flow ------------------------------------------------------------
+
+/** @param {IApiSdk} sdk */
+async function browse(sdk) {
+    if (!sdk.isLoaded || sdk.voyages.length === 0) {
+        await tui.runPager({ title: 'Browse', lines: ['No SDK data loaded.'] });
         return;
     }
+    const today = new Date().toISOString().slice(0, 10);
 
-    const voyages = sdk.voyages;
-    const s = sdk.stats;
-
-    let browsing = true;
-    while (browsing) {
-        printHeader();
-        console.log('Browse Voyage Data (SDK)');
-        console.log('------------------------');
-        console.log(`Loaded ${s.voyageCount} voyages, ${s.shipCount} ships, ${s.departureCount} departures, ${s.offeringCount} cabin offerings.`);
-        console.log();
-        voyages.forEach((v, i) => {
-            console.log(`  ${String(i + 1).padStart(3)}. ${v.heading || '(no heading)'}`);
+    while (true) {
+        const vi = await tui.runList({
+            title: `Voyages (${sdk.stats.voyageCount})`,
+            items: sdk.voyages,
+            renderItem: (v) => v.heading || '(no heading)',
+            renderDetail: (v) => voyageDetail(v, today),
+            footer: 'arrows/jk move · enter departures · q back',
         });
-        console.log();
-        process.stdout.write('Enter voyage number (or 0 to go back): ');
-
-        const input = await readLine();
-        if (input === '0' || input === '') {
-            browsing = false;
-            break;
-        }
-
-        const n = parseInt(input, 10);
-        if (isNaN(n) || n < 1 || n > voyages.length) {
-            console.log('Invalid voyage number.');
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            continue;
-        }
-
-        await selectDeparture(voyages[n - 1]);
+        if (vi === -1) return;
+        await selectDeparture(sdk.voyages[vi], today);
     }
 }
 
+async function selectDeparture(voyage, today) {
+    const departures = voyage.upcomingDepartures(today);
+    while (true) {
+        if (departures.length === 0) {
+            await tui.runPager({ title: voyage.heading, lines: ['No upcoming departures.'] });
+            return;
+        }
+        const di = await tui.runList({
+            title: voyage.heading,
+            items: departures,
+            renderItem: (d) => `${d.date}${d.endDate ? ` → ${d.endDate}` : ''}`,
+            renderDetail: (d) => departureDetail(d),
+            footer: 'arrows/jk move · enter cabins · q back',
+        });
+        if (di === -1) return;
+        const d = departures[di];
+        await tui.runPager({
+            title: `${voyage.heading} — ${d.date}`,
+            lines: cabinLines(d),
+            footer: 'arrows/jk scroll · q back',
+        });
+    }
+}
+
+// --- main menu --------------------------------------------------------------
+
+const MENU = [
+    { key: 'config', label: '0 · Show configuration', desc: 'Display basePath, output flags and the configured test files.' },
+    { key: 'tests', label: '1 · Run all automated tests', desc: 'Read each configured flat file through the SDK and report pass/fail.' },
+    { key: 'suite', label: '2 · Specify test file suite location / name', desc: 'Show the active test suite from config.json.' },
+    { key: 'browse', label: '3 · Browse data', desc: 'Explore voyages, departures and cabins from the loaded SDK graph.' },
+    { key: 'exit', label: '4 · Exit', desc: 'Leave the CLI.' },
+];
+
 async function main() {
+    const projectRoot = getProjectRoot();
+    const config = loadConfig();
+    /** @type {IApiSdk} */
+    const sdk = createApiSdk();
+    const selectedSuite = config?.testData;
+
+    tui.start();
+    tui.enterFullscreen();
     try {
-        const projectRoot = getProjectRoot();
-        const config = loadConfig();
-        /** @type {IApiSdk} */
-        const sdk = createApiSdk();
-        
-        // Initialize selected test suite from config
-        let selectedSuite = config?.testData;
-
-        let running = true;
-
-        // Set up stdin for reading
-        process.stdin.setEncoding('utf8');
-        process.stdin.resume();
-
-        // Load the SDK's data graph on startup
         await loadSdkData(config, sdk, projectRoot);
 
+        let running = true;
         while (running) {
-            printHeader();
-            printMenu(selectedSuite);
-
-            const input = await new Promise((resolve) => {
-                process.stdin.once('data', (data) => {
-                    resolve(data.toString().trim());
-                });
+            const idx = await tui.runList({
+                title: 'API SDK CLI',
+                items: MENU,
+                renderItem: (m) => m.label,
+                renderDetail: (m) => wrapText(m.desc, 40),
+                footer: 'arrows/jk move · enter select · q quit',
             });
+            const item = idx === -1 ? MENU[MENU.length - 1] : MENU[idx];
 
-            switch (input) {
-                case '0':
-                    showConfiguration(config, selectedSuite);
-                    console.log('Press any key to continue...');
-                    await waitForInput();
+            switch (item.key) {
+                case 'config':
+                    await tui.runPager({ title: 'Configuration', lines: configLines(config) });
                     break;
-
-                case '1':
-                    await runAllTests(config, sdk);
-                    console.log('Press any key to continue...');
-                    await waitForInput();
+                case 'tests': {
+                    tui.render('Automated Tests', ['Running usage.js suite…']);
+                    const { lines, code } = await runUsageSuite();
+                    await tui.runPager({
+                        title: `Automated Tests — usage.js (exit ${code})`,
+                        lines,
+                        footer: 'arrows/jk scroll · q back',
+                    });
                     break;
-
-                case '2':
-                    specifyTestSuite(selectedSuite);
-                    console.log('Press any key to continue...');
-                    await waitForInput();
+                }
+                case 'suite':
+                    await tui.runPager({ title: 'Test Suite', lines: suiteLines(selectedSuite) });
                     break;
-
-                case '3':
-                    await browseDataInMemory(sdk);
+                case 'browse':
+                    await browse(sdk);
                     break;
-
-                case '4':
+                case 'exit':
                     running = false;
-                    console.log('Exiting...');
-                    process.exit(0);
-                    break;
-
-                default:
-                    console.log('Invalid command. Please try again.');
-                    await new Promise(resolve => setTimeout(resolve, 1000));
                     break;
             }
         }
-    } catch (ex) {
-        console.error(`\x1b[31mFATAL ERROR: ${ex.message}\x1b[0m`);
-        console.error(ex.stack);
-        process.exit(1);
+    } finally {
+        tui.exitFullscreen();
+        tui.stop();
     }
 }
 
-main();
-
+main().catch((ex) => {
+    tui.exitFullscreen();
+    tui.stop();
+    console.error(`FATAL ERROR: ${ex.message}`);
+    console.error(ex.stack);
+    process.exit(1);
+});

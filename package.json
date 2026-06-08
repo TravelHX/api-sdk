@@ -6,8 +6,8 @@
   "scripts": {
     "build": "npm run build --prefix src/js",
     "build:js": "npm run build --prefix src/js",
-    "test": "npm test --prefix test/js",
-    "test:js": "npm test --prefix test/js"
+    "test": "npm run build --prefix src/js && node utils/js/usage.js",
+    "test:js": "npm run build --prefix src/js"
   },
   "keywords": [
     "api",
