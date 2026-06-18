@@ -29,15 +29,16 @@ public static class PathValidator
             return false;
         }
 
-        // Check for empty path segments
+        // Reject whitespace-only segments (e.g. "a/ /b"), but allow a truly empty
+        // leading segment so absolute paths like "/Users/.../file.json" are valid.
         var segments = filePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        if (segments.Any(string.IsNullOrWhiteSpace))
+        if (segments.Any(s => s.Length != 0 && string.IsNullOrWhiteSpace(s)))
         {
             return false;
         }
 
         // Check if path is too long
-        if (filePath.Length > 260) // Windows MAX_PATH limit
+        if (filePath.Length > 4096)
         {
             return false;
         }

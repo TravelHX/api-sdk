@@ -2,7 +2,7 @@
  * @api-sdk/js — USAGE BY EXAMPLE (and a self-verifying integration test).
  *
  * Read this top-to-bottom: ~20 examples ordered from trivial to advanced, each
- * a short, real snippet a consumer would write. Run it (`node usage.js`) and it
+ * a short, real snippet a consumer would write. Run it (`node usageCase.js`) and it
  * doubles as a test — every example asserts, and the process exits non-zero if
  * any check fails.
  *

@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\dotnet\ApiSdk\ApiSdk.csproj" />
+    <ProjectReference Include="..\ApiSdk\ApiSdk.csproj" />
   </ItemGroup>
 
 </Project>

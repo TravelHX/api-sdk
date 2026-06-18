@@ -25,7 +25,7 @@ sdk.departure(code).offeringForGrade('DS').priceFor('GBP').double;
 ```
 
 `npm run build` (in `src/js`) compiles **and** runs the `node:test` suite — a failing
-test fails the build. See [../utils/js/usage.js](../utils/js/usage.js) for ~20 worked
+test fails the build. See [../utils/js/usageCase.js](../utils/js/usageCase.js) for ~20 worked
 examples that also run as the integration test.
 
 ## SDKCLI
@@ -34,7 +34,7 @@ examples that also run as the integration test.
 scrollable lists + pager) that consumes the SDK through its interface. Menu:
 
 - 0. Show configuration
-- 1. Run all automated tests (runs `usage.js`)
+- 1. Run all automated tests (runs `usageCase.js`)
 - 2. Specify test file suite location / name
 - 3. Browse data (voyages → departures → cabins)
 - 4. Exit
@@ -50,9 +50,9 @@ so consumer code won't change. See [todo.md](todo.md).
 
 - `docs/` — documentation
 - `src/dotnet/`, `src/js/` — the SDKs (`src/js/src/data/` = OOP entities)
-- `test/dotnet/` — .NET tests (JS tests live in the SDK build)
-- `utils/dotnet/` — .NET runner + validator
-- `utils/js/` — `SDKCLI.js` (TUI), `usage.js` (examples + test), `tui.js`
+- `src/dotnet/ApiSdk.Tests/` — .NET unit tests, colocated with the SDK (JS unit tests live in `src/js/src/__tests__/`)
+- `utils/dotnet/` — .NET runner + usage-case suite (`ApiSdk.UsageCase`)
+- `utils/js/` — `SDKCLI.js` (TUI), `usageCase.js` (examples + test), `tui.js`
 - `data/`, `config.json` — sample flat files and test-data config
 
 ## Running
@@ -61,6 +61,6 @@ so consumer code won't change. See [todo.md](todo.md).
 npm run build --prefix src/js   # build SDK + run unit tests
 npm install --prefix utils/js   # link the SDK into the CLI (once)
 node utils/js/SDKCLI.js         # launch the CLI (real terminal)
-node utils/js/usage.js          # examples / integration suite
+node utils/js/usageCase.js          # examples / integration suite
 npm test                        # full verification
 ```
