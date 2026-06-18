@@ -27,5 +27,5 @@ services:
     stdin_open: true
     tty: true
     entrypoint: ["node"]
-    command: ["/app/js-testrunner/test-runner.js"]
+    command: ["/app/js-testrunner/SDKCLI.js"]
 

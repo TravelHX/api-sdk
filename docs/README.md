@@ -1,42 +1,66 @@
 # API SDK
 
-A cross-platform SDK that abstracts calls to both flat file storage (series of JSON files) and an OTA API. The SDK is available as both a NuGet package for .NET and an npm package for JavaScript/TypeScript.
+A cross-platform SDK that abstracts access to flat file storage (a series of JSON
+files) and, in future, an OTA API. Distributed as a NuGet package for .NET and an
+npm package (`@api-sdk/js`) for JavaScript/TypeScript.
 
-## Requirements
+The JavaScript SDK loads the flat files once into an OOP, bidirectionally-navigable
+graph of voyages, ships, cabin grades, departures, ports and priced cabin offerings.
 
-### Infrastructure
-- Support for both .NET and JavaScript/TypeScript platforms
-- .NET SDK distributed as NuGet package
-- JavaScript SDK distributed as npm package
-- Test infrastructure for both platforms
-- Internal console applications (.NET and Node.js) for validation and testing
-- Interactive console application that starts a test run
-- Test run ingests test data from the data folder (configurable via config.json)
-- Test run ingests the entire suite of files (all files listed in config.json), not individual files
-- Test run outputs to console every call and response
-- Console application menu with options to run .NET SDK or NodeJS SDK against flat files
-- Console application menu options:
-  - 0. Show configuration
-  - 1. Run All Automated Tests
-  - 2. Specify Test File Suite Location / name (displays currently selected test suite location / name)
-  - 3. Run .Net SDK against flat file suite
-  - 4. Run NodeJS SDK against flat file suite
-  - 5. Exit
+## JavaScript SDK (`@api-sdk/js`)
 
-### Flat File Support
-- Ability to read from flat file storage (series of JSON files)
-- Accept a file path as input parameter for individual file operations
-- Process entire suite of files (all files configured in config.json) for ingestion operations
-- Abstract file reading operations through the SDK interface
+- **Dormant until loaded** — `createApiSdk()` returns an `IApiSdk`; nothing is read
+  until `await sdk.load(sources)`.
+- **Interface-only** — the package exports the `createApiSdk` factory, the interfaces
+  and the entity *types*; concrete classes are hidden. All file access goes through
+  `IFlatFileReader`.
+- **Navigable both ways** — `voyage.departures[0].ship.cabinGrades` and
+  `cabinGrade.departures[0].voyage`; related objects are shared by identity (`===`).
 
-### OTA API Support
-- Ability to make calls to the OTA API
-- Abstract API communication through the SDK interface
+```js
+import { createApiSdk } from '@api-sdk/js';
+const sdk = createApiSdk();
+await sdk.load(sources);
+sdk.departure(code).offeringForGrade('DS').priceFor('GBP').double;
+```
+
+`npm run build` (in `src/js`) compiles **and** runs the `node:test` suite — a failing
+test fails the build. See [../utils/js/usage.js](../utils/js/usage.js) for ~20 worked
+examples that also run as the integration test.
+
+## SDKCLI
+
+`utils/js/SDKCLI.js` — an interactive, zero-dependency terminal UI (arrow/vim keys,
+scrollable lists + pager) that consumes the SDK through its interface. Menu:
+
+- 0. Show configuration
+- 1. Run all automated tests (runs `usage.js`)
+- 2. Specify test file suite location / name
+- 3. Browse data (voyages → departures → cabins)
+- 4. Exit
+
+> The separate **.NET** runner (`utils/dotnet/ApiSdk.TestRunner`) keeps its 0–5 menu.
+
+## OTA API Support (planned — Phase 4)
+
+An OTA reader/client plugs into the same graph behind the same `IApiSdk` contract,
+so consumer code won't change. See [todo.md](todo.md).
 
 ## Project Structure
 
-- `docs/` - Documentation files (README, API docs, guides, etc.)
-- `src/` - Source code files
-- `test/` - Test files and test data
-- `utils/` - Utility scripts and helper functions
+- `docs/` — documentation
+- `src/dotnet/`, `src/js/` — the SDKs (`src/js/src/data/` = OOP entities)
+- `test/dotnet/` — .NET tests (JS tests live in the SDK build)
+- `utils/dotnet/` — .NET runner + validator
+- `utils/js/` — `SDKCLI.js` (TUI), `usage.js` (examples + test), `tui.js`
+- `data/`, `config.json` — sample flat files and test-data config
 
+## Running
+
+```bash
+npm run build --prefix src/js   # build SDK + run unit tests
+npm install --prefix utils/js   # link the SDK into the CLI (once)
+node utils/js/SDKCLI.js         # launch the CLI (real terminal)
+node utils/js/usage.js          # examples / integration suite
+npm test                        # full verification
+```

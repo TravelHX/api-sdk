@@ -88,7 +88,7 @@ $command = ""
 if ($Platform -eq "node" -or $Platform -eq "js") {
     Write-Host "  Platform: Node.js" -ForegroundColor Gray
     $entrypoint = "node"
-    $command = "/app/js-testrunner/test-runner.js"
+    $command = "/app/js-testrunner/SDKCLI.js"
 } else {
     Write-Host "  Platform: .NET" -ForegroundColor Gray
     $entrypoint = "dotnet"

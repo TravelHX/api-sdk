@@ -5,8 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc",
+    "test": "node --test dist/__tests__/*.test.js",
+    "build": "npm run compile && npm run test",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
