@@ -1,31 +1,56 @@
-version: '3.8'
+# Canonical build + test + run path for the API SDK.
+#
+#   docker compose build                  -> builds every stage, runs BOTH test
+#                                            gates (xUnit + node --test).
+#   docker compose run --rm gate          -> same, ends in a trivial /bin/true.
+#   docker compose run --rm dotnet-usage  -> .NET usage/example suite.
+#   docker compose run --rm node-usage    -> JS usage/example suite.
+#   docker compose run --rm node-cli      -> interactive SDKCLI.js TUI.
+#
+# config.json and data/ are mounted read-only; they are never baked into images.
 
 services:
-  testrunner-dotnet:
+  # Fan-in build target: forces both .NET and JS test gates in one build.
+  gate:
     build:
       context: .
       dockerfile: Dockerfile
-    image: api-sdk-testrunner:dotnet
-    container_name: api-sdk-testrunner-dotnet
+      target: gate
+    image: api-sdk:gate
+    command: ["/bin/true"]
+
+  # .NET usage runner. ApiSdk.UsageCase walks up from /app to find /app/data.
+  dotnet-usage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dotnet-usage
+    image: api-sdk:dotnet-usage
+    volumes:
+      - ./data:/app/data:ro
+
+  # JS usage/example suite (usageCase.js). ROOT resolves to /app -> /app/data.
+  node-usage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: node-usage
+    image: api-sdk:node-usage
+    volumes:
+      - ./data:/app/data:ro
+      - ./config.json:/app/config.json:ro
+    command: ["node", "usageCase.js"]
+
+  # Interactive SDKCLI.js TUI. getProjectRoot() returns /app -> /app/config.json.
+  node-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: node-usage
+    image: api-sdk:node-usage
     volumes:
       - ./data:/app/data:ro
       - ./config.json:/app/config.json:ro
     stdin_open: true
     tty: true
-    entrypoint: ["dotnet"]
-    command: ["/app/dotnet-testrunner/ApiSdk.TestRunner.dll"]
-
-  testrunner-node:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: api-sdk-testrunner:node
-    container_name: api-sdk-testrunner-node
-    volumes:
-      - ./data:/app/data:ro
-      - ./config.json:/app/config.json:ro
-    stdin_open: true
-    tty: true
-    entrypoint: ["node"]
-    command: ["/app/js-testrunner/SDKCLI.js"]
-
+    command: ["node", "SDKCLI.js"]

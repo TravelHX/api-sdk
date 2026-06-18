@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "compile": "tsc",
-    "test": "node --test dist/__tests__/*.test.js",
+    "test": "node --test dist/__tests__/",
     "build": "npm run compile && npm run test",
     "prepublishOnly": "npm run build"
   },
