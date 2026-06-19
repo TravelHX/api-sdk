@@ -7,8 +7,8 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>ApiSdk</PackageId>
     <Version>1.0.0</Version>
-    <Authors>API SDK Team</Authors>
-    <Company>API SDK</Company>
+    <Authors>HX Travel</Authors>
+    <Company>HX Travel</Company>
     <Description>Cross-platform SDK that abstracts calls to both flat file storage (series of JSON files) and an OTA API</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/your-org/api-sdk</RepositoryUrl>

@@ -2,7 +2,7 @@
 
 Phases 1–3 (flat-file SDK, test infrastructure, interactive runner) and the
 JavaScript SDK redesign (OOP data layer, interface-only `IApiSdk`/`createApiSdk`,
-tests-in-build, the SDKCLI TUI, `usage.js`, CI) are **complete** — see
+tests-in-build, the SDKCLI TUI, `usageCase.js`, CI) are **complete** — see
 [README.md](README.md) for the current architecture. Only the work below remains.
 
 ## Phase 4: OTA API Integration

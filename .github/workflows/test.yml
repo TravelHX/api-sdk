@@ -6,36 +6,47 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-jobs:
-  test-dotnet:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '9.0.x'
-      - name: Restore dependencies
-        run: dotnet restore
-      - name: Build
-        run: dotnet build --no-restore
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
+# Docker is the canonical, system-agnostic build/test path. CI uses the SAME
+# path contributors use locally: the multi-stage image build runs the .NET
+# xUnit gate and the JS `node --test` gate as build-stage gates, so a failing
+# test makes `docker build` exit nonzero and fails this job. After the image
+# builds, we exercise the integration/usage runners as compose services.
+#
+# This replaces the previous native setup-dotnet / setup-node jobs.
 
-  test-js:
+jobs:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-      - name: Install SDK dependencies
-        run: npm install --prefix src/js
-      - name: Install CLI dependencies (links @api-sdk/js)
-        run: npm install --prefix utils/js
-      - name: Build SDK + run unit tests (tsc && node --test)
-        run: npm run build --prefix src/js
-      - name: Run usage / integration suite
-        run: node utils/js/usage.js
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Caching rationale:
+      # `docker compose build` does not cleanly expose buildx cache backends
+      # (cache-from / cache-to type=gha). docker/bake-action consumes the SAME
+      # docker-compose.yml as a bake definition, so the build is identical to
+      # the contributor path, while letting us inject GitHub Actions layer
+      # caching via `set` overrides. `*.cache-from`/`*.cache-to` apply to every
+      # target/service in the compose file. Building the image runs both test
+      # gates; if any gate fails the bake build exits nonzero and the step (and
+      # job) fails.
+      - name: Build images + run test gates (cached)
+        uses: docker/bake-action@v5
+        with:
+          files: docker-compose.yml
+          load: true
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
+
+      # Integration / usage runners. `docker compose run` reuses the images
+      # just built by bake (same compose file, same image tags). `--rm` cleans
+      # up the one-shot containers. A nonzero exit from either runner fails the
+      # step and therefore the job (run steps use `set -e` by default).
+      - name: Run .NET usage / integration suite
+        run: docker compose run --rm dotnet-usage
+
+      - name: Run JS usage / integration suite
+        run: docker compose run --rm node-usage

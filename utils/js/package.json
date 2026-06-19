@@ -7,13 +7,13 @@
   "scripts": {
     "start": "node SDKCLI.js",
     "sdkcli": "node SDKCLI.js",
-    "example": "node usage.js",
-    "test": "node usage.js"
+    "example": "node usageCase.js",
+    "test": "node usageCase.js"
   },
   "dependencies": {
     "@api-sdk/js": "file:../../src/js"
   },
   "keywords": [],
-  "author": "",
+  "author": "HX Travel",
   "license": "MIT"
 }

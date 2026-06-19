@@ -60,3 +60,6 @@ coverage/
 *.tmp
 *.temp
 *.log
+
+# higekato agent scratchpad
+higekato-note.md

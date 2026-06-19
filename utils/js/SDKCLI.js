@@ -100,8 +100,8 @@ function suiteLines(suite) {
 }
 
 /**
- * Runs usage.js directly as a subprocess and returns its output as plain lines.
- * usage.js is the single source of truth for the example/test suite; we capture
+ * Runs usageCase.js directly as a subprocess and returns its output as plain lines.
+ * usageCase.js is the single source of truth for the example/test suite; we capture
  * its stdout (stripping colour) rather than importing it — it calls
  * process.exit(), which would otherwise terminate the CLI.
  */
@@ -109,7 +109,7 @@ function runUsageSuite() {
     return new Promise((resolve) => {
         execFile(
             process.execPath, // the same node binary running this CLI
-            ['usage.js'],
+            ['usageCase.js'],
             { cwd: __dirname, maxBuffer: 16 * 1024 * 1024 },
             (err, stdout, stderr) => {
                 const code = err && typeof err.code === 'number' ? err.code : err ? 1 : 0;
@@ -328,10 +328,10 @@ async function main() {
                     await tui.runPager({ title: 'Configuration', lines: configLines(config) });
                     break;
                 case 'tests': {
-                    tui.render('Automated Tests', ['Running usage.js suite…']);
+                    tui.render('Automated Tests', ['Running usageCase.js suite…']);
                     const { lines, code } = await runUsageSuite();
                     await tui.runPager({
-                        title: `Automated Tests — usage.js (exit ${code})`,
+                        title: `Automated Tests — usageCase.js (exit ${code})`,
                         lines,
                         footer: 'arrows/jk scroll · q back',
                     });
