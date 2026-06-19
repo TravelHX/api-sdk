@@ -27,15 +27,19 @@ WORKDIR /src
 COPY src/dotnet/ApiSdk.sln src/dotnet/
 COPY src/dotnet/ApiSdk/ApiSdk.csproj src/dotnet/ApiSdk/
 COPY src/dotnet/ApiSdk.Tests/ApiSdk.Tests.csproj src/dotnet/ApiSdk.Tests/
-# Utils solution (ApiSdk.UsageCase) - references ../../../src/dotnet/ApiSdk
+# Utils projects (ApiSdk.UsageCase, ApiSdk.SDKCLI) - both reference
+# ../../../src/dotnet/ApiSdk. Copy their csproj first for restore caching.
 COPY utils/dotnet/ApiSdk.UsageCase/ApiSdk.UsageCase.csproj utils/dotnet/ApiSdk.UsageCase/
+COPY utils/dotnet/ApiSdk.SDKCLI/ApiSdk.SDKCLI.csproj utils/dotnet/ApiSdk.SDKCLI/
 
 RUN dotnet restore src/dotnet/ApiSdk.sln \
-    && dotnet restore utils/dotnet/ApiSdk.UsageCase/ApiSdk.UsageCase.csproj
+    && dotnet restore utils/dotnet/ApiSdk.UsageCase/ApiSdk.UsageCase.csproj \
+    && dotnet restore utils/dotnet/ApiSdk.SDKCLI/ApiSdk.SDKCLI.csproj
 
 # --- Source layer: copy the actual sources, then build/test. ----------------
 COPY src/dotnet/ src/dotnet/
 COPY utils/dotnet/ApiSdk.UsageCase/ utils/dotnet/ApiSdk.UsageCase/
+COPY utils/dotnet/ApiSdk.SDKCLI/ utils/dotnet/ApiSdk.SDKCLI/
 
 # Build the whole SDK solution in Release (no restore - already restored above).
 RUN dotnet build src/dotnet/ApiSdk.sln -c Release --no-restore
@@ -46,6 +50,11 @@ RUN dotnet test src/dotnet/ApiSdk.sln -c Release --no-build --no-restore --verbo
 # Publish the .NET usage runner (self-references the built ApiSdk project).
 RUN dotnet publish utils/dotnet/ApiSdk.UsageCase/ApiSdk.UsageCase.csproj \
     -c Release --no-restore -o /publish/dotnet-usage
+
+# Publish the interactive .NET SDK CLI (TUI). config.json/data are NOT part of
+# the project, so nothing is baked in; they are mounted read-only at runtime.
+RUN dotnet publish utils/dotnet/ApiSdk.SDKCLI/ApiSdk.SDKCLI.csproj \
+    -c Release --no-restore -o /publish/sdkcli
 
 # =============================================================================
 # Stage: node-test - JS build + `node --test` gate + stage usage runner
@@ -91,6 +100,20 @@ WORKDIR /app
 COPY --from=dotnet-test /publish/dotnet-usage/ ./
 
 ENTRYPOINT ["dotnet", "ApiSdk.UsageCase.dll"]
+
+# =============================================================================
+# Stage: dotnet-cli - thin .NET runtime image for the interactive SDK CLI (TUI)
+# =============================================================================
+# ApiSdk.SDKCLI detects /app/config.json and treats /app as the project root,
+# then resolves data paths against it. So config.json and data/ are mounted at
+# /app (read-only) via docker-compose; nothing is baked into this image.
+FROM mcr.microsoft.com/dotnet/runtime:9.0 AS dotnet-cli
+WORKDIR /app
+
+# Published interactive SDK CLI only.
+COPY --from=dotnet-test /publish/sdkcli/ ./
+
+ENTRYPOINT ["dotnet", "ApiSdk.SDKCLI.dll"]
 
 # =============================================================================
 # Stage: node-usage - thin Node runtime image

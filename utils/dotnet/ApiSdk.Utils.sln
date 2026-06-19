@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.TestRunner", "ApiSdk.TestRunner\ApiSdk.TestRunner.csproj", "{BBD45963-8A21-4443-BFA7-68E969A80F13}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.SDKCLI", "ApiSdk.SDKCLI\ApiSdk.SDKCLI.csproj", "{BBD45963-8A21-4443-BFA7-68E969A80F13}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.UsageCase", "ApiSdk.UsageCase\ApiSdk.UsageCase.csproj", "{6F8392C4-F293-474E-954F-5D8ABBF6F812}"
 EndProject

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ApiSdk.TestRunner.Models;
+namespace ApiSdk.SDKCLI.Models;
 
 public class TestConfig
 {

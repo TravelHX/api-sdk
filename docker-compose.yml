@@ -5,7 +5,8 @@
 #   docker compose run --rm gate          -> same, ends in a trivial /bin/true.
 #   docker compose run --rm dotnet-usage  -> .NET usage/example suite.
 #   docker compose run --rm node-usage    -> JS usage/example suite.
-#   docker compose run --rm node-cli      -> interactive SDKCLI.js TUI.
+#   docker compose run --rm node-cli      -> interactive SDKCLI.js TUI (JS).
+#   docker compose run --rm dotnet-cli    -> interactive ApiSdk.SDKCLI TUI (.NET).
 #
 # config.json and data/ are mounted read-only; they are never baked into images.
 
@@ -28,6 +29,21 @@ services:
     image: api-sdk:dotnet-usage
     volumes:
       - ./data:/app/data:ro
+
+  # Interactive .NET SDK CLI (TUI). ApiSdk.SDKCLI treats /app as project root
+  # once /app/config.json is present, then resolves data paths against it.
+  # Runs via the stage ENTRYPOINT (dotnet ApiSdk.SDKCLI.dll); no command needed.
+  dotnet-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dotnet-cli
+    image: api-sdk:dotnet-cli
+    volumes:
+      - ./data:/app/data:ro
+      - ./config.json:/app/config.json:ro
+    stdin_open: true
+    tty: true
 
   # JS usage/example suite (usageCase.js). ROOT resolves to /app -> /app/data.
   node-usage:
