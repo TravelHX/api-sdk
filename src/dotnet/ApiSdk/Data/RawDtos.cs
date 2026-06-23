@@ -67,6 +67,64 @@ internal sealed class RawSourceMarketRow
     [JsonPropertyName("TourEndDate")] public string? TourEndDate { get; set; }
 }
 
+// --- V3 (originally "prod") flat-file shapes -----------------------------
+// The V3 format is a different JSON schema: pricing is embedded per voyage
+// (no separate source-market files), ships carry numbers-with-units, and there
+// is no separate cabin-grade reference. These raw shapes feed V3DataSetLoader.
+
+internal sealed class RawProdPort
+{
+    public string? Code { get; set; }
+    public string? Country { get; set; }
+    public string? Description { get; set; }
+}
+
+internal sealed class RawProdShip
+{
+    public string? ShipId { get; set; }
+    public string? Heading { get; set; }
+    public string? PassengerCapacity { get; set; }
+    public string? YearOfConstruction { get; set; }
+    public string? GrossTonnage { get; set; }
+    public string? Length { get; set; }
+    public string? Speed { get; set; }
+}
+
+internal sealed class RawProdItineraryDay
+{
+    public int? Day { get; set; }
+    public string? Location { get; set; }
+    public string? Heading { get; set; }
+    public string? Body { get; set; }
+    public List<string?>? MediaContent { get; set; }
+}
+
+internal sealed class RawProdCategory
+{
+    [JsonPropertyName("Category")] public string? Category { get; set; }
+    [JsonPropertyName("MaxOccupancy")] public int? MaxOccupancy { get; set; }
+    [JsonPropertyName("Rate_Sgl")] public string? RateSgl { get; set; }
+    [JsonPropertyName("Rate_Dbl")] public string? RateDbl { get; set; }
+    [JsonPropertyName("RateCode")] public string? RateCode { get; set; }
+}
+
+internal sealed class RawProdVoyage
+{
+    [JsonPropertyName("VoyageID")] public string? VoyageId { get; set; }
+    [JsonPropertyName("DepartureDate")] public string? DepartureDate { get; set; }
+    [JsonPropertyName("ArrivalDate")] public string? ArrivalDate { get; set; }
+    [JsonPropertyName("EmbarkationTime")] public string? EmbarkationTime { get; set; }
+    [JsonPropertyName("DisembarkationTime")] public string? DisembarkationTime { get; set; }
+    [JsonPropertyName("DeparturePort")] public string? DeparturePort { get; set; }
+    [JsonPropertyName("ArrivalPort")] public string? ArrivalPort { get; set; }
+    [JsonPropertyName("ShipCode")] public string? ShipCode { get; set; }
+    [JsonPropertyName("Description")] public string? Description { get; set; }
+    [JsonPropertyName("Region")] public string? Region { get; set; }
+    [JsonPropertyName("Currency")] public string? Currency { get; set; }
+    [JsonPropertyName("itinerary")] public List<RawProdItineraryDay>? Itinerary { get; set; }
+    [JsonPropertyName("categories")] public List<RawProdCategory>? Categories { get; set; }
+}
+
 /// <summary>A double/single price in a single currency.</summary>
 public sealed record Price(string Currency, double? Single, double? Double);
 

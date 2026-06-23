@@ -2,6 +2,20 @@ using ApiSdk.Data;
 
 namespace ApiSdk;
 
+/// <summary>The flat-file format a <see cref="DataSources"/> points at.</summary>
+public enum DataSourceFormat
+{
+    /// <summary>The V1 (originally "dev") format: separate
+    /// ships/ports/cabingrades/voyages files plus per-currency source-market
+    /// rate files.</summary>
+    V1 = 0,
+
+    /// <summary>The V3 (originally "prod") format: JSON with pricing embedded
+    /// per voyage, ships carrying numbers-with-units, and no separate
+    /// cabin-grade reference.</summary>
+    V3 = 1,
+}
+
 /// <summary>Absolute paths to the flat files the SDK is loaded from.</summary>
 public sealed class DataSources
 {
@@ -12,6 +26,15 @@ public sealed class DataSources
 
     /// <summary>One or more source-market rate files (per currency).</summary>
     public IReadOnlyList<string> SourceMarkets { get; init; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Which flat-file format the paths above point at. There is intentionally NO
+    /// compiled-in default: the value is sourced from configuration/environment
+    /// via <see cref="DataSourceFormatConfig.Resolve"/> and is <c>required</c> so
+    /// the compiler forces every caller to set it explicitly. This removes the
+    /// previous hardcoded compiled-in default (formerly <c>V1</c>).
+    /// </summary>
+    public required DataSourceFormat Format { get; init; }
 }
 
 public sealed class SdkStats

@@ -15,4 +15,15 @@
     <PackageTags>api;sdk;ota;json</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ApiSdk.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Sources the data-source format from IConfiguration (see
+         DataSourceFormatConfig). Abstractions-only so the SDK stays light and
+         the host owns the concrete configuration providers. -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
 </Project>

@@ -267,8 +267,22 @@ internal static class Program
             // discovery failure handled below via empty stats
         }
 
+        // Format is read from config (env var DATASOURCE_FORMAT) and throws if
+        // unset — there is no compiled-in default.
+        DataSourceFormat format;
+        try
+        {
+            format = DataSourceFormatConfig.Resolve();
+        }
+        catch (Exception ex)
+        {
+            Tui.Render("API SDK CLI — loading", new[] { $"FAILED: {ex.Message}" });
+            return;
+        }
+
         var sources = new DataSources
         {
+            Format = format,                                          // ref-data file layout version
             Voyages = Path.Combine(refDataDir, "voyages.json"),
             Ships = Path.Combine(refDataDir, "ships.json"),
             CabinGrades = Path.Combine(refDataDir, "cabingrades.json"),

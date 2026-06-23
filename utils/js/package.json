@@ -11,7 +11,7 @@
     "test": "node usageCase.js"
   },
   "dependencies": {
-    "@api-sdk/js": "file:../../src/js"
+    "@api-sdk/js": "file:../../artifacts/npm/api-sdk-js-1.0.0.tgz"
   },
   "keywords": [],
   "author": "HX Travel",

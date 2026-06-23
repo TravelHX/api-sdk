@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\dotnet\ApiSdk\ApiSdk.csproj" />
+    <PackageReference Include="ApiSdk" Version="1.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

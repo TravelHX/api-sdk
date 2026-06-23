@@ -68,14 +68,14 @@ internal static class Program
         while (dir is not null)
         {
             var candidate = Path.Combine(
-                dir.FullName, "data", "FlatFileSample", "flatfiles_dev", "flatfiles_dev", "RefData");
+                dir.FullName, "data", "flatfiles_dev", "flatfiles_dev", "RefData");
             if (Directory.Exists(candidate))
                 return candidate;
             dir = dir.Parent;
         }
 
         throw new DirectoryNotFoundException(
-            "Could not locate data/FlatFileSample/flatfiles_dev/flatfiles_dev/RefData " +
+            "Could not locate data/flatfiles_dev/flatfiles_dev/RefData " +
             $"by walking up from {AppContext.BaseDirectory}");
     }
 
@@ -112,6 +112,7 @@ internal static class Program
         var refDir = FindRefDataDir();
         var sources = new DataSources
         {
+            Format = DataSourceFormat.V1,                              // ref-data file layout version
             Voyages = Path.Combine(refDir, "voyages.json"),
             Ships = Path.Combine(refDir, "ships.json"),
             CabinGrades = Path.Combine(refDir, "cabingrades.json"),

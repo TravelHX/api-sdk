@@ -56,6 +56,9 @@ coverage/
 [Bb]uild/
 [Dd]ist/
 
+# Local NuGet artifact feed (reproducible via `dotnet pack`)
+artifacts/
+
 # Temporary files
 *.tmp
 *.temp
@@ -63,3 +66,6 @@ coverage/
 
 # higekato agent scratchpad
 higekato-note.md
+
+# Production flatfiles (stray in-repo copy; real fixtures live outside the repo)
+data/flatfiles_prod/

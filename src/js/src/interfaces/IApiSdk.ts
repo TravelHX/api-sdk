@@ -7,14 +7,44 @@ import type {
   Port,
 } from '../data';
 
-/** Absolute paths to the flat files the SDK is loaded from. */
+/**
+ * Selects which flat-file format {@link IApiSdk.load} parses. `'v1'` is the
+ * original format; `'v3'` is the per-voyage-priced format. There is no default:
+ * callers must choose explicitly (see {@link resolveDataSourceFormat} for the
+ * env-driven resolution). Mirrors the .NET `DataSourceFormat`.
+ */
+export type DataSourceFormat = 'v1' | 'v3';
+
+/**
+ * Absolute paths to the flat files the SDK is loaded from.
+ *
+ * The v1 loader uses {@link DataSources.voyages}, {@link DataSources.ships},
+ * {@link DataSources.cabinGrades}, {@link DataSources.ports} and
+ * {@link DataSources.sourceMarkets}. The v3 loader (when
+ * {@link DataSources.format} is `'v3'`) reads single ships/voyages/ports files
+ * from {@link DataSources.ships}/{@link DataSources.voyages}/{@link DataSources.ports}
+ * — exactly like the v1 loader's path fields — and simply ignores
+ * `cabinGrades`/`sourceMarkets` (v3 pricing is embedded per voyage and there
+ * is no separate cabin-grade reference). The shape is identical to .NET's
+ * `DataSources`: the only v3 addition is the {@link DataSources.format} flag.
+ */
 export interface DataSources {
+  /** Voyages file. */
   voyages: string;
+  /** Ships file. */
   ships: string;
+  /** Cabin-grade reference file (v1 only; v3 has no separate ref). */
   cabinGrades: string;
   ports: string;
-  /** One or more source-market rate files (per currency). */
+  /** One or more source-market rate files (v1 only, per currency). */
   sourceMarkets: string[];
+
+  /**
+   * Which flat-file format to parse. REQUIRED — there is no compiled-in
+   * default. Resolve it from configuration via {@link resolveDataSourceFormat}
+   * or set the literal explicitly.
+   */
+  format: DataSourceFormat;
 }
 
 /** Progress callback invoked during {@link IApiSdk.load}. */

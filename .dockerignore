@@ -8,6 +8,11 @@
 **/node_modules/
 **/dist/
 
+# Host-built SDK artifacts (packed .nupkg/.tgz). These are produced FRESH
+# inside the image during the *-test stages, so the host copies must NOT be
+# sent in the build context -- that would risk baking a stale artifact.
+artifacts/
+
 # Test outputs
 **/TestResults/
 **/coverage/

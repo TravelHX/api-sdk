@@ -12,8 +12,17 @@
 // The only entry point — returns the SDK behind its IApiSdk interface.
 export { createApiSdk } from './api-sdk';
 
+// Config-driven format resolution (reads the DATASOURCE_FORMAT env var).
+export { resolveDataSourceFormat, DATASOURCE_FORMAT_ENV } from './loading/formatConfig';
+
 // SDK contract + supporting types.
-export type { IApiSdk, DataSources, ProgressFn, SdkStats } from './interfaces/IApiSdk';
+export type {
+  IApiSdk,
+  DataSources,
+  DataSourceFormat,
+  ProgressFn,
+  SdkStats,
+} from './interfaces/IApiSdk';
 export type { IFlatFileReader } from './interfaces/IFlatFileReader';
 
 // Read-only entity types exposed by the graph (types only — not constructable).

@@ -1,4 +1,4 @@
-import { createApiSdk } from '@api-sdk/js';
+import { createApiSdk, resolveDataSourceFormat } from '@api-sdk/js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -200,6 +200,10 @@ async function loadSdkData(config, sdk, projectRoot) {
     const basePath = config?.testData?.basePath || '';
     const refDataDir = path.resolve(path.join(projectRoot, basePath, 'RefData'));
 
+    // Throws clearly if DATASOURCE_FORMAT is unset/blank or not v1/v3 — no default.
+    // Resolved before building sources so an unset value fails fast.
+    const format = resolveDataSourceFormat();
+
     let sourceMarkets = [];
     try {
         sourceMarkets = fs
@@ -212,6 +216,7 @@ async function loadSdkData(config, sdk, projectRoot) {
     }
 
     const sources = {
+        format,
         voyages: path.join(refDataDir, 'voyages.json'),
         ships: path.join(refDataDir, 'ships.json'),
         cabinGrades: path.join(refDataDir, 'cabingrades.json'),
