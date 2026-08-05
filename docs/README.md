@@ -46,19 +46,36 @@ tests on each side.
 ## SDKCLI
 
 An interactive, zero-dependency terminal UI (arrow/vim keys, scrollable lists +
-pager) that consumes the SDK through its interface. Two implementations with the
-same chrome and the same menu:
+pager) that consumes the SDK through its interface. Two implementations sharing
+the same chrome, but their menus have diverged — the .NET CLI gained an
+interactive market/locale setup flow (and a matching "reload" menu item) that
+the JS CLI doesn't have yet:
 
 - `utils/js/SDKCLI.js` — JavaScript (`tui.js` primitives)
 - `utils/dotnet/ApiSdk.SDKCLI` — .NET, a faithful TUI port (`Tui.cs`)
 
-Menu (both):
+**JS menu** (`utils/js/SDKCLI.js`):
 
 - 0. Show configuration
 - 1. Run all automated tests
 - 2. Specify test file suite location / name
 - 3. Browse data (voyages → departures → cabins)
 - 4. Exit
+
+**.NET menu** (`utils/dotnet/ApiSdk.SDKCLI`):
+
+- 0. Reload data (re-run the format/market/locale setup flow and reload the SDK graph)
+- 1. Show configuration
+- 2. Run all automated tests
+- 3. Specify test file suite location / name
+- 4. Browse data (voyages → departures → cabins)
+- 5. Exit
+
+The .NET CLI also prompts interactively for data-source format, market and
+locale at startup — or reads them from the `DATASOURCE_FORMAT`,
+`DATASOURCE_MARKET` and `DATASOURCE_LOCALE` environment variables as a
+non-interactive shortcut when all three are validly set. A cancelled or failed
+setup/load doesn't dead-end the session: menu item 0 re-enters the same flow.
 
 Each CLI runs its own suite in-process and stays isolated — neither launches the
 other. Launch either with `./run-cli.sh` (see **Running**).
