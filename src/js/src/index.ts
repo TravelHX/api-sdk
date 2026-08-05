@@ -15,6 +15,22 @@ export { createApiSdk } from './api-sdk';
 // Config-driven format resolution (reads the DATASOURCE_FORMAT env var).
 export { resolveDataSourceFormat, DATASOURCE_FORMAT_ENV } from './loading/formatConfig';
 
+// Config-driven market/locale resolution (reads DATASOURCE_MARKET / DATASOURCE_LOCALE).
+// V1 (dev) and V3 (prod) have separate market->locale tables/resolvers — see
+// loading/marketConfig.ts for why they aren't merged into one shared shape.
+export {
+  MARKET_LOCALES,
+  LOCALE_CURRENCY,
+  MARKET_LOCALES_V3,
+  DATASOURCE_MARKET_ENV,
+  DATASOURCE_LOCALE_ENV,
+  resolveMarket,
+  resolveLocale,
+  resolveMarketDataSources,
+  resolveMarketDataSourcesV3,
+} from './loading/marketConfig';
+export type { Market, MarketDataSources, MarketDataSourcesV3 } from './loading/marketConfig';
+
 // SDK contract + supporting types.
 export type {
   IApiSdk,
