@@ -331,4 +331,115 @@ public static class Tui
             Environment.Exit(130);
         }
     }
+
+    /// <summary>
+    /// Full-screen single-line free-text prompt (there was no text-input
+    /// primitive in this toolkit before — every other view is a picker/pager).
+    /// Reads raw <see cref="Console.ReadKey(bool)"/> presses directly (rather
+    /// than through <see cref="ReadKeyMapped"/>, whose <see cref="Key"/> enum
+    /// drops the actual character) so typed characters can be appended to the
+    /// buffer. Returns the entered text on Enter, or <c>null</c> if the user
+    /// cancelled with Escape. Ctrl-C exits the whole program, same as every
+    /// other view.
+    /// </summary>
+    public static string? PromptText(
+        string title,
+        IReadOnlyList<string>? detail = null,
+        string? initialValue = null,
+        string? footer = null)
+    {
+        var (cols, _) = Size();
+        var buffer = new StringBuilder(initialValue ?? string.Empty);
+        var hint = footer ?? "enter confirm · esc cancel";
+        const string inputPrefix = " > ";
+        const string cursorGlyph = "█";
+
+        void Draw()
+        {
+            var outLines = new List<string>
+            {
+                Cyan(Bold(Pad($" {title}", cols))),
+                new string('─', cols),
+            };
+            if (detail is { Count: > 0 })
+            {
+                outLines.Add(string.Empty);
+                foreach (var line in detail) outLines.Add(Pad($" {line}", cols));
+            }
+            outLines.Add(string.Empty);
+
+            // The cursor is always at the END of `buffer` here — this primitive
+            // only supports append/backspace, no left/right caret movement — so
+            // once the buffer is longer than the visible width, what needs to
+            // stay on screen is the buffer's TAIL, not its head. Pad()/Truncate()
+            // keep the head and cut the tail (append "…" at the end), which is
+            // exactly backwards for this case: with a long prefilled value (e.g.
+            // this app's ~100+ char default data directories), that made the
+            // cursor — and every subsequent keystroke — permanently off-screen
+            // from the very first draw. Build a scrolled window into the tail of
+            // `buffer` instead, wide enough to fit before the cursor glyph, with
+            // a leading "…" only when content is actually hidden before it.
+            var available = Math.Max(0, cols - inputPrefix.Length - cursorGlyph.Length);
+            string visible;
+            if (buffer.Length <= available)
+            {
+                visible = buffer.ToString();
+            }
+            else if (available <= 1)
+            {
+                visible = available == 1 ? "…" : string.Empty;
+            }
+            else
+            {
+                var tailChars = available - 1; // reserve 1 column for the leading "…"
+                visible = "…" + buffer.ToString(buffer.Length - tailChars, tailChars);
+            }
+
+            outLines.Add(Pad($"{inputPrefix}{visible}{cursorGlyph}", cols));
+            outLines.Add(string.Empty);
+            outLines.Add(new string('─', cols));
+            outLines.Add(Dim(Pad($" {hint}", cols)));
+            Frame(outLines);
+        }
+
+        Clear();
+        Draw();
+
+        while (true)
+        {
+            var info = Console.ReadKey(intercept: true);
+
+            if ((info.Modifiers & ConsoleModifiers.Control) != 0 &&
+                (info.Key == ConsoleKey.C || info.KeyChar == '\x03'))
+            {
+                ExitFullscreen();
+                Environment.Exit(130);
+            }
+
+            switch (info.Key)
+            {
+                case ConsoleKey.Enter:
+                    return buffer.ToString();
+                case ConsoleKey.Escape:
+                    return null;
+                case ConsoleKey.Backspace:
+                    if (buffer.Length > 0) buffer.Length -= 1;
+                    break;
+                default:
+                    // char.IsControl alone isn't enough of a filter: Alt+<letter>
+                    // arrives as a normal, non-control KeyChar (e.g. Alt+F is
+                    // KeyChar 'f' with Modifiers=Alt) and would otherwise get
+                    // silently appended to the path buffer as if it had been
+                    // typed literally, and an unrecognized escape sequence (e.g.
+                    // a mouse report some terminals emit) could inject several
+                    // such "printable" chars in one burst. Only accept keys with
+                    // no modifier or Shift alone — every other modifier
+                    // combination is some other terminal function, not text entry.
+                    if (info.Modifiers is 0 or ConsoleModifiers.Shift && !char.IsControl(info.KeyChar))
+                        buffer.Append(info.KeyChar);
+                    break;
+            }
+            Draw();
+        }
+    }
 }
