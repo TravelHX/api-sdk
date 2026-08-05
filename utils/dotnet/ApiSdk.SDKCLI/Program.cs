@@ -19,6 +19,11 @@ internal static class Program
     private static string _projectRoot = string.Empty;
     private static global::ApiSdk.ApiSdk _sdk = null!;
     private static TestDataConfig? _selectedTestSuite;
+    private static DataSourceFormat? _resolvedFormat;
+    private static Market? _resolvedMarket;
+    private static string? _resolvedLocale;
+    private static string? _resolvedCurrency; // null for V3 (no currency concept), not just "unresolved"
+    private static string? _resolvedBaseDir;  // the actual directory data was loaded from (V1 RefData dir or V3 prod dir)
 
     // --- project root + config ---------------------------------------------
 
@@ -113,10 +118,28 @@ internal static class Program
         var o = _config.Output;
         var lines = new List<string>
         {
-            $"Base path:             {t?.BasePath}",
+            $"Format:                {(_resolvedFormat is { } fmt ? fmt.ToString() : "(not resolved)")}",
+            $"Market:                {(_resolvedMarket is { } m ? m.ToString() : "(not resolved)")}",
+            $"Locale:                {_resolvedLocale ?? "(not resolved)"}",
+            $"Currency:              {_resolvedCurrency ?? (_resolvedFormat == DataSourceFormat.V3 ? "n/a (V3 has no source-market currency)" : "(not resolved)")}",
+            // The directory data was ACTUALLY loaded from for the resolved
+            // format (V1's RefData dir or V3's prod dir, whichever ran) — a
+            // wholly different, unrelated path from "Test data path" below.
+            $"Base path:             {_resolvedBaseDir ?? "(not resolved)"}",
             $"Show call details:     {o?.ShowCallDetails ?? true}",
             $"Show response details: {o?.ShowResponseDetails ?? true}",
             $"Show timing:           {o?.ShowTiming ?? true}",
+            string.Empty,
+            // A SEPARATE, unrelated base path: config.json's testData.basePath,
+            // used only by the "Run all automated tests"/"Specify test file
+            // suite" menu items below, which predate and are independent of
+            // market/locale resolution. Explicitly labeled (rather than left
+            // implicit right before the relative file paths that follow) so it
+            // doesn't read as if those files live under "Base path" above —
+            // they don't; e.g. under V3 "Base path" points at
+            // data/flatfiles_prod/... while this points at
+            // data/flatfiles_dev/... regardless of which format loaded.
+            $"Test data path:        {t?.BasePath ?? "(unset)"}",
             $"Test files:            {t?.Files?.Count ?? 0}",
             string.Empty,
         };
@@ -245,36 +268,103 @@ internal static class Program
 
     // --- startup load -------------------------------------------------------
 
+    /// <summary>Thrown to unwind out of the interactive setup flow when the user backs out.</summary>
+    private sealed class SetupCancelledException : Exception;
+
+    /// <summary>
+    /// Set every "what got resolved/loaded" display field to the given values —
+    /// used both to commit a freshly successful resolution and, via
+    /// <see cref="LoadSdkDataAsync"/>'s snapshot-then-restore pattern, to put
+    /// them back exactly as they were before a cancelled/failed attempt.
+    /// </summary>
+    private static void SetResolvedState(DataSourceFormat? format, Market? market, string? locale, string? currency, string? baseDir)
+    {
+        _resolvedFormat = format;
+        _resolvedMarket = market;
+        _resolvedLocale = locale;
+        _resolvedCurrency = currency;
+        _resolvedBaseDir = baseDir;
+    }
+
+    /// <summary>
+    /// Load the SDK data. Callable more than once — see the "reload" menu item
+    /// in <see cref="Main"/> — so a cancelled setup or a failed load must not
+    /// stomp a PRIOR successful load's state: <see cref="_sdk"/> itself already
+    /// gets this right on its own (<see cref="ApiSdk.ApiSdk.LoadAsync"/> only
+    /// commits its new graph after the loader succeeds, so a throw leaves the
+    /// previous graph — if any — fully intact and still <c>IsLoaded</c>); this
+    /// method mirrors that for the "what's resolved" display fields by
+    /// snapshotting them up front and restoring the snapshot (not blanking them)
+    /// on any failure path, rather than clearing to "not resolved" — the only
+    /// case where clearing and restoring the snapshot look the same is the very
+    /// first call, when the snapshot IS all-null.
+    /// </summary>
     private static async Task LoadSdkDataAsync()
     {
-        var basePath = _config.TestData?.BasePath ?? string.Empty;
-        var refDataDir = Path.GetFullPath(Path.Combine(_projectRoot, basePath, "RefData"));
+        var previousFormat = _resolvedFormat;
+        var previousMarket = _resolvedMarket;
+        var previousLocale = _resolvedLocale;
+        var previousCurrency = _resolvedCurrency;
+        var previousBaseDir = _resolvedBaseDir;
 
-        var sourceMarkets = new List<string>();
+        // Format/market/locale are resolved from config/env (DATASOURCE_FORMAT,
+        // DATASOURCE_MARKET, DATASOURCE_LOCALE) when validly set there — a valid
+        // env/config value for a given step means that step's prompt is skipped
+        // (handy for scripted/non-interactive use). Anything unset or invalid
+        // falls through to an interactive menu instead of throwing: this is a
+        // TUI, so asking is the normal path and env vars are just a shortcut,
+        // not a requirement.
+        DataSources sources;
         try
         {
-            sourceMarkets = Directory
-                .EnumerateFiles(refDataDir)
-                .Select(p => Path.GetFileName(p) ?? string.Empty)
-                .Where(f => f.StartsWith("SourceMarket_", StringComparison.Ordinal) &&
-                            f.EndsWith("_seaware.json", StringComparison.Ordinal))
-                .OrderBy(f => f, StringComparer.Ordinal)
-                .Select(f => Path.Combine(refDataDir, f))
-                .ToList();
-        }
-        catch
-        {
-            // discovery failure handled below via empty stats
-        }
+            var format = ResolveOrPromptFormat();
+            var market = ResolveOrPromptMarket();
+            var locale = ResolveOrPromptLocale(format, market);
 
-        var sources = new DataSources
+            _resolvedFormat = format;
+            _resolvedMarket = market;
+
+            sources = format switch
+            {
+                DataSourceFormat.V1 => BuildV1Sources(market, locale),
+                DataSourceFormat.V3 => BuildV3Sources(market, locale),
+                _ => throw new InvalidOperationException($"Unsupported data-source format '{format}'."),
+            };
+        }
+        catch (SetupCancelledException)
         {
-            Voyages = Path.Combine(refDataDir, "voyages.json"),
-            Ships = Path.Combine(refDataDir, "ships.json"),
-            CabinGrades = Path.Combine(refDataDir, "cabingrades.json"),
-            Ports = Path.Combine(refDataDir, "portlist.json"),
-            SourceMarkets = sourceMarkets,
-        };
+            // _resolvedFormat/_resolvedMarket may already have been set above
+            // (format+market can resolve before locale/BuildXSources fails or
+            // the user cancels) — restore the pre-attempt snapshot rather than
+            // leaving that half-finished pick in place, so the config screen
+            // keeps matching whatever _sdk actually has loaded (nothing, on the
+            // first call; the previous successful load, on a cancelled reload).
+            SetResolvedState(previousFormat, previousMarket, previousLocale, previousCurrency, previousBaseDir);
+
+            // Without WaitKey, this message would be shown for exactly one frame:
+            // Main's menu loop redraws immediately once LoadSdkDataAsync returns,
+            // overwriting it before it's readable.
+            Tui.Render("API SDK CLI — loading", new[]
+            {
+                "Setup cancelled — no data loaded.",
+                string.Empty,
+                "Press any key to continue…",
+            });
+            Tui.WaitKey();
+            return;
+        }
+        catch (Exception ex)
+        {
+            SetResolvedState(previousFormat, previousMarket, previousLocale, previousCurrency, previousBaseDir);
+            Tui.Render("API SDK CLI — loading", new[]
+            {
+                $"FAILED: {ex.Message}",
+                string.Empty,
+                "Press any key to continue…",
+            });
+            Tui.WaitKey();
+            return;
+        }
 
         var log = new List<string>();
         // Synchronous progress sink so loading lines render in order on this
@@ -291,6 +381,15 @@ internal static class Program
         }
         catch (Exception ex)
         {
+            // Paths resolved fine (format/market/locale/baseDir were all valid),
+            // but the SDK itself failed to load the files (e.g. malformed
+            // JSON). ApiSdk.LoadAsync only commits its new graph after the
+            // loader succeeds, so _sdk still has whatever it had before this
+            // call — nothing, on the first load (IsLoaded stays false), or the
+            // previous successful load's graph, on a failed reload (IsLoaded
+            // stays true). Restore the snapshot to match either case, instead
+            // of unconditionally claiming nothing is resolved.
+            SetResolvedState(previousFormat, previousMarket, previousLocale, previousCurrency, previousBaseDir);
             log.Add($"FAILED: {ex.Message}");
         }
 
@@ -304,6 +403,288 @@ internal static class Program
         loaded.Add("Press any key to continue…");
         Tui.Render("API SDK CLI — loaded", loaded);
         Tui.WaitKey();
+    }
+
+    /// <summary>
+    /// Resolve <see cref="DataSourceFormat"/> from config/env; if unset/invalid,
+    /// prompt the user to pick one via <see cref="Tui.RunList{T}"/> instead of
+    /// throwing. Same "don't silently drop an explicit bad value" treatment as
+    /// <see cref="ResolveOrPromptLocale"/>: <see cref="DataSourceFormatConfig.Resolve"/>
+    /// throws for both "unset" and "invalid" with no way to tell which from the
+    /// exception alone, so the raw env var is peeked independently — if it was
+    /// non-blank, Resolve() must have rejected it (its only other throw case is
+    /// "unset"), and that value is surfaced in the prompt title rather than the
+    /// prompt looking identical to nothing being configured at all. (Only the
+    /// env var is peeked, not any config key, because this app never
+    /// constructs/passes an IConfiguration — env is the only source Resolve()
+    /// actually reads here.) Throws <see cref="SetupCancelledException"/> if the
+    /// user backs out of the prompt.
+    /// </summary>
+    private static DataSourceFormat ResolveOrPromptFormat()
+    {
+        string? invalidConfigured = null;
+        try
+        {
+            return DataSourceFormatConfig.Resolve();
+        }
+        catch (InvalidOperationException)
+        {
+            var rawEnv = Environment.GetEnvironmentVariable(DataSourceFormatConfig.EnvVar);
+            if (!string.IsNullOrWhiteSpace(rawEnv)) invalidConfigured = rawEnv.Trim();
+        }
+
+        var options = new[] { DataSourceFormat.V1, DataSourceFormat.V3 };
+        var title = invalidConfigured is not null
+            ? $"{DataSourceFormatConfig.EnvVar} '{invalidConfigured}' is not valid — pick one:"
+            : "Select format";
+        var idx = Tui.RunList(
+            title: title,
+            items: options,
+            renderItem: (f, _) => f == DataSourceFormat.V1 ? "V1 (dev)" : "V3 (prod)",
+            renderDetail: f => f == DataSourceFormat.V1
+                ? new[]
+                {
+                    "Dev flat-file format: separate ships/ports/cabin-grades/",
+                    "voyages files plus per-currency source-market rate files.",
+                }
+                : new[]
+                {
+                    "Prod flat-file format: pricing embedded per voyage, no",
+                    "separate cabin-grade reference file.",
+                },
+            footer: "arrows/jk move · enter select · q/esc cancel setup");
+
+        if (idx == -1) throw new SetupCancelledException();
+        return options[idx];
+    }
+
+    /// <summary>
+    /// Resolve <see cref="Market"/> from config/env; if unset/invalid, prompt the
+    /// user via <see cref="Tui.RunList{T}"/>. Same market list for both formats.
+    /// Same explicit-bad-value surfacing as <see cref="ResolveOrPromptFormat"/>
+    /// (see its remarks for why the raw env var is peeked directly).
+    /// </summary>
+    private static Market ResolveOrPromptMarket()
+    {
+        string? invalidConfigured = null;
+        try
+        {
+            return MarketConfig.ResolveMarket();
+        }
+        catch (InvalidOperationException)
+        {
+            var rawEnv = Environment.GetEnvironmentVariable(MarketConfig.MarketEnvVar);
+            if (!string.IsNullOrWhiteSpace(rawEnv)) invalidConfigured = rawEnv.Trim();
+        }
+
+        var options = Enum.GetValues<Market>();
+        var title = invalidConfigured is not null
+            ? $"{MarketConfig.MarketEnvVar} '{invalidConfigured}' is not valid — pick one:"
+            : "Select market";
+        var idx = Tui.RunList(
+            title: title,
+            items: options,
+            renderItem: (m, _) => m.ToString(),
+            footer: "arrows/jk move · enter select · q/esc cancel setup");
+
+        if (idx == -1) throw new SetupCancelledException();
+        return options[idx];
+    }
+
+    /// <summary>
+    /// Resolve the locale for <paramref name="market"/> under <paramref name="format"/>'s
+    /// locale set — <see cref="MarketConfig.GetLocales"/> returns V1's lowercase
+    /// set or V3's uppercase set as appropriate; this file has no access to
+    /// (and no need for) MarketConfig's underlying lookup tables, which are
+    /// private. Casing normalization (V1 lowercase, V3 uppercase) is NOT
+    /// re-derived here — <see cref="MarketConfig.TryNormalizeLocale"/> is the
+    /// one place that decides it, this method just calls it. A config/env value
+    /// is only honored if it's actually valid for THIS market+format; otherwise
+    /// it's treated the same as unset — EXCEPT it is not silently swapped for
+    /// the default: an explicit-but-invalid value (e.g.
+    /// <c>DATASOURCE_MARKET=UK DATASOURCE_LOCALE=fr</c>, where UK's only real
+    /// locale is "uk"/"GB") is surfaced in the prompt title instead of being
+    /// dropped, even when the market only has one locale to offer — that's the
+    /// difference between "nothing was configured" and "something wrong was
+    /// configured", and the two should not look the same to the user.
+    /// <see cref="MarketConfig.ResolveMarketDataSources"/> itself throws on
+    /// this input; the TUI must not be more lenient than the SDK it calls. If
+    /// the market has exactly one locale AND nothing invalid was configured,
+    /// it's used without asking — mirrors the resolver's own "don't ask when
+    /// there's only one answer" default.
+    /// </summary>
+    private static string ResolveOrPromptLocale(DataSourceFormat format, Market market)
+    {
+        var locales = MarketConfig.GetLocales(market, format); // fresh, alphabetically sorted snapshot
+
+        string? invalidConfigured = null;
+        var configured = MarketConfig.ResolveLocale();
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            if (MarketConfig.TryNormalizeLocale(market, configured, format, out var normalized))
+                return normalized!;
+
+            // Configured but not valid for this market+format — do NOT silently
+            // fall back to the default/only locale; carry it through so the
+            // prompt below can surface exactly what was wrong.
+            invalidConfigured = configured.Trim();
+        }
+
+        if (locales.Count == 1 && invalidConfigured is null) return locales[0];
+
+        var title = invalidConfigured is not null
+            ? $"{MarketConfig.LocaleEnvVar} '{invalidConfigured}' is not valid for {market} — pick one:"
+            : $"Select locale ({market})";
+
+        var idx = Tui.RunList(
+            title: title,
+            items: locales,
+            renderItem: (l, _) => l,
+            footer: "arrows/jk move · enter select · q/esc cancel setup");
+
+        if (idx == -1) throw new SetupCancelledException();
+        return locales[idx];
+    }
+
+    /// <summary>
+    /// Prompt for a replacement data directory when the resolved voyages/ships
+    /// files aren't found on disk — the one recoverable case in setup; every
+    /// other format/market/locale mismatch is just a menu re-selection, not a
+    /// free-text retry loop. Throws <see cref="SetupCancelledException"/> if the
+    /// user cancels (Escape) instead of supplying a path.
+    /// </summary>
+    private static string PromptForReplacementDirectory(string currentDir, IReadOnlyList<string> missingFileNames)
+    {
+        var detail = new List<string> { "Could not find:" };
+        foreach (var f in missingFileNames) detail.Add($"  {f}");
+        detail.Add(string.Empty);
+        detail.Add($"under: {currentDir}");
+        detail.Add(string.Empty);
+        detail.Add("Enter a replacement directory containing these files:");
+
+        var input = Tui.PromptText(
+            "Data directory not found",
+            detail: detail,
+            initialValue: currentDir,
+            footer: "enter confirm · esc cancel setup");
+
+        if (input is null) throw new SetupCancelledException();
+
+        var trimmed = input.Trim();
+        if (trimmed.Length == 0) return currentDir;
+
+        try
+        {
+            return Path.GetFullPath(trimmed);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            // Malformed input (invalid characters, embedded NUL, etc.) — keep
+            // the previous directory. The caller's File.Exists check will still
+            // fail and re-prompt, so this self-corrects instead of crashing on
+            // a bad path (Path.GetFullPath's documented exception set for a
+            // malformed argument, minus SecurityException which is obsolete/
+            // never thrown on .NET Core).
+            return currentDir;
+        }
+    }
+
+    /// <summary>
+    /// V1 ("dev") sources: ref-data files live under
+    /// <c>{config.json basePath}/RefData</c> (currently
+    /// <c>data/flatfiles_dev/flatfiles_dev/RefData</c>), locale-suffixed
+    /// lowercase, plus a per-currency source-market rate file. If ANY of the
+    /// files this format actually needs — voyages, ships, cabin grades, ports,
+    /// the source-market rate file — aren't found there, the user is prompted
+    /// for a replacement directory and resolution is retried against it.
+    /// (Checking only voyages+ships and leaving the rest to fail unrecoverably
+    /// once <see cref="ApiSdk.ApiSdk.LoadAsync"/> got to them was the original,
+    /// narrower version of this check.)
+    /// </summary>
+    private static DataSources BuildV1Sources(Market market, string? locale)
+    {
+        var basePath = _config.TestData?.BasePath ?? string.Empty;
+        var refDataDir = Path.GetFullPath(Path.Combine(_projectRoot, basePath, "RefData"));
+
+        MarketDataSources marketSources;
+        string cabinGrades;
+        string ports;
+        while (true)
+        {
+            marketSources = MarketConfig.ResolveMarketDataSources(market, locale, refDataDir);
+            cabinGrades = Path.Combine(refDataDir, "cabingrades.json");
+            ports = Path.Combine(refDataDir, "portlist.json");
+
+            var required = new List<string> { marketSources.Voyages, marketSources.Ships, cabinGrades, ports };
+            required.AddRange(marketSources.SourceMarkets);
+
+            var missing = required.Where(f => !File.Exists(f)).ToList();
+            if (missing.Count == 0) break;
+
+            refDataDir = PromptForReplacementDirectory(refDataDir, missing.Select(f => Path.GetFileName(f) ?? f).ToList());
+        }
+
+        _resolvedLocale = marketSources.Locale;
+        _resolvedCurrency = marketSources.Currency;
+        _resolvedBaseDir = refDataDir;
+
+        return new DataSources
+        {
+            Format = DataSourceFormat.V1,
+            Voyages = marketSources.Voyages,
+            Ships = marketSources.Ships,
+            CabinGrades = cabinGrades,
+            Ports = ports,
+            SourceMarkets = marketSources.SourceMarkets,
+        };
+    }
+
+    /// <summary>
+    /// V3 ("prod") sources: unlike V1/dev, there is no config-driven basePath for
+    /// this today, so the prod tree is hardcoded relative to the repo/project
+    /// root the same way <c>ApiSdk.UsageCase</c> hardcodes the dev path — it's
+    /// the only tree of its shape in the repo. Files sit flat under
+    /// <c>data/flatfiles_prod/flatfiles_prod</c> (no <c>RefData</c> subfolder,
+    /// unlike V1), locale-suffixed UPPERCASE. There is no source-market rate
+    /// file and no cabin-grade reference file in V3 — pricing is embedded per
+    /// voyage and <see cref="ApiSdk.Loading.V3DataSetLoader"/> never reads
+    /// <see cref="DataSources.CabinGrades"/>, so that field is set to a path
+    /// that is never opened, and it's deliberately excluded from the
+    /// existence check below along with <see cref="DataSources.SourceMarkets"/>
+    /// (also unread). If voyages, ships, or ports aren't found, the user is
+    /// prompted for a replacement directory, same as V1.
+    /// </summary>
+    private static DataSources BuildV3Sources(Market market, string? locale)
+    {
+        var prodDir = Path.GetFullPath(Path.Combine(_projectRoot, "data", "flatfiles_prod", "flatfiles_prod"));
+
+        MarketDataSourcesV3 marketSources;
+        string ports;
+        while (true)
+        {
+            marketSources = MarketConfig.ResolveMarketDataSourcesV3(market, locale, prodDir);
+            ports = Path.Combine(prodDir, "ports.json");
+
+            var required = new[] { marketSources.Voyages, marketSources.Ships, ports };
+            var missing = required.Where(f => !File.Exists(f)).ToList();
+            if (missing.Count == 0) break;
+
+            prodDir = PromptForReplacementDirectory(prodDir, missing.Select(f => Path.GetFileName(f) ?? f).ToList());
+        }
+
+        _resolvedLocale = marketSources.Locale;
+        _resolvedCurrency = null;
+        _resolvedBaseDir = prodDir;
+
+        return new DataSources
+        {
+            Format = DataSourceFormat.V3,
+            Voyages = marketSources.Voyages,
+            Ships = marketSources.Ships,
+            CabinGrades = Path.Combine(prodDir, "unused.json"), // never read by V3DataSetLoader
+            Ports = ports,
+            SourceMarkets = Array.Empty<string>(),               // never read by V3DataSetLoader
+        };
     }
 
     // --- browse flow --------------------------------------------------------
@@ -499,11 +880,21 @@ internal static class Program
 
     private static readonly MenuItem[] Menu =
     {
-        new("config", "0 · Show configuration", "Display basePath, output flags and the configured test files."),
-        new("tests", "1 · Run all automated tests", "Read each configured flat file through the SDK and report pass/fail."),
-        new("suite", "2 · Specify test file suite location / name", "Show the active test suite from config.json."),
-        new("browse", "3 · Browse data", "Explore voyages, departures and cabins from the loaded SDK graph."),
-        new("exit", "4 · Exit", "Leave the CLI."),
+        // Every setup prompt's footer says "q/esc cancel setup", and a load can
+        // fail outright (bad JSON, etc.) — without this entry, either of those
+        // dropped you into this menu with literally no way back into setup
+        // short of quitting the whole process and relaunching (with different
+        // env vars, if that's what needed to change). LoadSdkDataAsync is
+        // written to be safely re-callable: a cancelled/failed reload restores
+        // the previous successful load's state instead of clobbering it, so
+        // this is always safe to try, including as a "did the file on disk
+        // change?" refresh after a successful load.
+        new("reload", "0 · Reload data", "Re-run format/market/locale setup and reload the SDK graph."),
+        new("config", "1 · Show configuration", "Display basePath, output flags and the configured test files."),
+        new("tests", "2 · Run all automated tests", "Read each configured flat file through the SDK and report pass/fail."),
+        new("suite", "3 · Specify test file suite location / name", "Show the active test suite from config.json."),
+        new("browse", "4 · Browse data", "Explore voyages, departures and cabins from the loaded SDK graph."),
+        new("exit", "5 · Exit", "Leave the CLI."),
     };
 
     private static async Task<int> Main()
@@ -543,6 +934,9 @@ internal static class Program
 
                     switch (item.Key)
                     {
+                        case "reload":
+                            await LoadSdkDataAsync();
+                            break;
                         case "config":
                             Tui.RunPager("Configuration", ConfigLines());
                             break;

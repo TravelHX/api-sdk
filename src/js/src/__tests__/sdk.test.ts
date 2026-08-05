@@ -35,6 +35,7 @@ class FakeReader implements IFlatFileReader {
 }
 
 const SOURCES: DataSources = {
+  format: 'v1',
   voyages: 'voyages.json',
   ships: 'ships.json',
   cabinGrades: 'cabingrades.json',

@@ -16,7 +16,7 @@ import { InvalidFilePathError, FileNotFoundError } from '../errors/FileReadingEr
  * Resolved from the compiled location dist/__tests__ up to the repo root.
  */
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
-const DATA_DIR = path.join(REPO_ROOT, 'data', 'FlatFileSample', 'flatfiles_dev', 'flatfiles_dev', 'RefData');
+const DATA_DIR = path.join(REPO_ROOT, 'data', 'flatfiles_dev', 'flatfiles_dev', 'RefData');
 const VOYAGES = path.join(DATA_DIR, 'voyages.json');
 
 test('createApiSdk returns a dormant instance', () => {

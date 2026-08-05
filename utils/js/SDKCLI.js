@@ -1,4 +1,16 @@
-import { createApiSdk } from '@api-sdk/js';
+import {
+    createApiSdk,
+    resolveDataSourceFormat,
+    resolveMarket,
+    resolveLocale,
+    resolveMarketDataSources,
+    resolveMarketDataSourcesV3,
+    MARKET_LOCALES,
+    MARKET_LOCALES_V3,
+    DATASOURCE_FORMAT_ENV,
+    DATASOURCE_MARKET_ENV,
+    DATASOURCE_LOCALE_ENV,
+} from '@api-sdk/js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -190,50 +202,292 @@ function cabinLines(departure) {
     return lines;
 }
 
-// --- startup load -----------------------------------------------------------
+// --- startup wizard -----------------------------------------------------------
+//
+// Interactive selection, mirroring the "Browse data" flow's use of
+// tui.runList: DATASOURCE_FORMAT/DATASOURCE_MARKET/DATASOURCE_LOCALE remain a
+// valid shortcut (skip the corresponding prompt when already validly set —
+// handy for scripted/non-interactive use) but are never required. Missing or
+// invalid env values fall through to a menu instead of throwing.
+//
+// Thrown to unwind out of the wizard when the user backs out (q/esc) of a
+// mandatory step (format/market/locale) before any menu exists to return to.
+// Caught in main() and treated as a quiet exit, not a crash.
+class QuitRequested extends Error {}
+
+/**
+ * Runs an env-driven resolver (resolveDataSourceFormat / resolveMarket, both
+ * of which throw on unset/invalid) and converts the throw into a result
+ * object instead of swallowing it — so a bad env value can be surfaced to the
+ * user (as a startup note, see loadSdkData) rather than silently falling
+ * through to the prompt with no explanation.
+ */
+function tryResolve(resolver, env = process.env) {
+    try {
+        return { value: resolver(env), warning: null };
+    } catch (ex) {
+        return { value: null, warning: ex.message };
+    }
+}
+
+function localesFor(format, market) {
+    return format === 'v3' ? MARKET_LOCALES_V3[market] : MARKET_LOCALES[market];
+}
+
+/**
+ * Guard at the top of every select*Prompt(): an interactive tui.runList
+ * prompt is only meaningful with a real terminal on stdin. Piped/redirected
+ * stdin (CI, `node SDKCLI.js < /dev/null`, scripted invocation) never
+ * delivers a keypress, so the prompt's promise would simply hang forever —
+ * and since nothing else keeps the event loop alive once stdin hits EOF,
+ * the process would exit 0 with no data loaded and no error, reporting
+ * false success on what is really a configuration error. Fail loudly
+ * instead, exactly like the pre-wizard resolveDataSourceFormat()/
+ * resolveMarket() throw-on-missing behavior did for non-interactive callers.
+ */
+function requireInteractiveOrFail(envVar, reason) {
+    if (!process.stdin.isTTY) {
+        throw new Error(
+            `${envVar} ${reason} and stdin is not a TTY, so the interactive selection ` +
+                `prompt can't run. Set ${envVar} explicitly for non-interactive/scripted use.`
+        );
+    }
+}
+
+async function selectFormatPrompt() {
+    requireInteractiveOrFail(DATASOURCE_FORMAT_ENV, 'is not set (or not "v1"/"v3")');
+    const options = [
+        {
+            value: 'v1',
+            label: 'v1 · dev',
+            desc: [
+                'The original flat-file format.',
+                'data/flatfiles_dev — per-currency SourceMarket rate files,',
+                'separate cabin-grade reference.',
+            ],
+        },
+        {
+            value: 'v3',
+            label: 'v3 · prod',
+            desc: [
+                'The per-voyage-priced flat-file format.',
+                'data/flatfiles_prod — pricing embedded per voyage,',
+                'no separate cabin-grade reference.',
+            ],
+        },
+    ];
+    const i = await tui.runList({
+        title: 'Select format',
+        items: options,
+        renderItem: (o) => o.label,
+        renderDetail: (o) => o.desc,
+        footer: 'arrows/jk move · enter select · q quit',
+    });
+    if (i === -1) throw new QuitRequested();
+    return options[i].value;
+}
+
+async function selectMarketPrompt(format) {
+    requireInteractiveOrFail(DATASOURCE_MARKET_ENV, 'is not set (or not a recognized market)');
+    // Both formats' tables share the same Market keys (see marketConfig.ts) —
+    // MARKET_LOCALES is the source of truth so this list can't drift from it.
+    const markets = Object.keys(MARKET_LOCALES);
+    const i = await tui.runList({
+        title: 'Select market',
+        items: markets,
+        renderItem: (m) => m,
+        renderDetail: (m) => [`Locales (${format}): ${localesFor(format, m).join(', ')}`],
+        footer: 'arrows/jk move · enter select · q quit',
+    });
+    if (i === -1) throw new QuitRequested();
+    return markets[i];
+}
+
+async function selectLocalePrompt(market, locales) {
+    requireInteractiveOrFail(
+        DATASOURCE_LOCALE_ENV,
+        `is required for market "${market}" (which has multiple locales: ${locales.join(', ')}) but not set (or invalid)`
+    );
+    const i = await tui.runList({
+        title: `Select locale — ${market}`,
+        items: locales,
+        renderItem: (l) => l,
+        footer: 'arrows/jk move · enter select · q quit',
+    });
+    if (i === -1) throw new QuitRequested();
+    return locales[i];
+}
+
+/**
+ * Build the full {@link DataSources} path set (minus `format`) for
+ * {@link format}/{@link market}/{@link locale} against {@link baseDir}, plus
+ * the subset of those paths that must actually exist on disk for that
+ * format's loader (V1DataSetLoader reads voyages/ships/cabinGrades/ports/every
+ * sourceMarkets file; V3DataSetLoader reads only voyages/ships/ports — it
+ * never touches cabinGrades/sourceMarkets, so those aren't checked for v3).
+ */
+function buildSources(format, market, locale, baseDir) {
+    if (format === 'v3') {
+        // Prod fixtures live flat under data/flatfiles_prod/flatfiles_prod (no
+        // RefData subfolder, uppercase 2-letter country codes, no `_seaware`
+        // suffix).
+        const { voyages, ships } = resolveMarketDataSourcesV3(market, locale, baseDir);
+        const ports = path.join(baseDir, 'ports.json');
+        return {
+            sources: { voyages, ships, cabinGrades: '', ports, sourceMarkets: [] },
+            filesToCheck: [voyages, ships, ports],
+        };
+    }
+    const { voyages, ships, sourceMarkets } = resolveMarketDataSources(market, locale, baseDir);
+    const cabinGrades = path.join(baseDir, 'cabingrades.json');
+    const ports = path.join(baseDir, 'portlist.json');
+    return {
+        sources: { voyages, ships, cabinGrades, ports, sourceMarkets },
+        filesToCheck: [voyages, ships, cabinGrades, ports, ...sourceMarkets],
+    };
+}
+
+/**
+ * Resolve the full {@link DataSources} path set for {@link format}/
+ * {@link market}/{@link locale} against {@link defaultBaseDir}. If any file
+ * the loader actually reads doesn't exist on disk, prompts (tui.runInput) for
+ * a replacement directory and retries — this is the ONE recoverable failure
+ * case; everything else about market/locale is just menu selection, never
+ * free text.
+ *
+ * @returns {Promise<{baseDir: string, sources: object}|null>} null if the
+ *   user cancelled the directory prompt (esc) — caller skips loading rather
+ *   than crashing or force-quitting the CLI.
+ */
+async function resolveBaseDirInteractively(format, market, locale, defaultBaseDir) {
+    let baseDir = defaultBaseDir;
+
+    while (true) {
+        const { sources, filesToCheck } = buildSources(format, market, locale, baseDir);
+
+        const missing = filesToCheck.filter((f) => !fs.existsSync(f));
+        if (missing.length === 0) {
+            return { baseDir, sources };
+        }
+
+        // Same non-interactive hazard as the format/market/locale prompts
+        // (see requireInteractiveOrFail): without a TTY there's no one to
+        // type a replacement directory, so fail loudly here too rather than
+        // hanging or silently reporting success with nothing loaded.
+        if (!process.stdin.isTTY) {
+            throw new Error(
+                `Data files not found for format="${format}" market="${market}" locale="${locale}": ` +
+                    `missing ${missing.join(', ')}. Tried "${baseDir}". stdin is not a TTY, so the ` +
+                    `interactive directory prompt can't run.`
+            );
+        }
+
+        const input = await tui.runInput({
+            title: 'Data files not found',
+            info: [
+                `Missing: ${missing.map((f) => path.basename(f)).join(', ')}`,
+                `Tried:   ${baseDir}`,
+            ],
+            label: 'New directory: ',
+            footer: 'enter confirm · esc skip loading',
+        });
+        if (input === null || input.trim().length === 0) {
+            return null;
+        }
+        baseDir = path.resolve(input.trim());
+    }
+}
 
 /**
  * @param {object} config
  * @param {IApiSdk} sdk
  */
 async function loadSdkData(config, sdk, projectRoot) {
-    const basePath = config?.testData?.basePath || '';
-    const refDataDir = path.resolve(path.join(projectRoot, basePath, 'RefData'));
+    // Startup notes (invalid/ignored env values) — shown on the loading
+    // screen below rather than lost behind the alt-screen buffer.
+    const notes = [];
 
-    let sourceMarkets = [];
-    try {
-        sourceMarkets = fs
-            .readdirSync(refDataDir)
-            .filter((f) => /^SourceMarket_.*_seaware\.json$/.test(f))
-            .sort()
-            .map((f) => path.join(refDataDir, f));
-    } catch {
-        /* discovery failure handled below via empty stats */
+    // Env vars remain a valid shortcut: skip a prompt only when the
+    // corresponding value is ALREADY validly set for the choices made so far.
+    // An unset value is normal (no note); an INVALID one is surfaced so the
+    // bad value doesn't silently vanish.
+    const formatResult = tryResolve(resolveDataSourceFormat);
+    let format = formatResult.value;
+    if (formatResult.warning && process.env[DATASOURCE_FORMAT_ENV]) {
+        notes.push(`DATASOURCE_FORMAT ignored: ${formatResult.warning}`);
+    }
+    if (!format) format = await selectFormatPrompt();
+
+    const marketResult = tryResolve(resolveMarket);
+    let market = marketResult.value;
+    if (marketResult.warning && process.env[DATASOURCE_MARKET_ENV]) {
+        notes.push(`DATASOURCE_MARKET ignored: ${marketResult.warning}`);
+    }
+    if (!market) market = await selectMarketPrompt(format);
+
+    // Locale prompt only when the market has more than one locale for this
+    // format (mirrors the resolver: a single-locale market is never asked).
+    const locales = localesFor(format, market);
+    let locale;
+    if (locales.length === 1) {
+        locale = locales[0];
+        const envLocale = resolveLocale();
+        if (envLocale) {
+            notes.push(
+                `DATASOURCE_LOCALE="${envLocale}" ignored: market "${market}" has only one locale (${locale}).`
+            );
+        }
+    } else {
+        const envLocale = resolveLocale();
+        const match = envLocale && locales.find((l) => l.toLowerCase() === envLocale.toLowerCase());
+        if (envLocale && !match) {
+            notes.push(
+                `DATASOURCE_LOCALE="${envLocale}" ignored: not valid for market "${market}" (expected one of ${locales.join(', ')}).`
+            );
+        }
+        locale = match || (await selectLocalePrompt(market, locales));
     }
 
-    const sources = {
-        voyages: path.join(refDataDir, 'voyages.json'),
-        ships: path.join(refDataDir, 'ships.json'),
-        cabinGrades: path.join(refDataDir, 'cabingrades.json'),
-        ports: path.join(refDataDir, 'portlist.json'),
-        sourceMarkets,
+    const defaultBaseDir =
+        format === 'v3'
+            ? path.resolve(path.join(projectRoot, 'data', 'flatfiles_prod', 'flatfiles_prod'))
+            : path.resolve(path.join(projectRoot, config?.testData?.basePath || '', 'RefData'));
+
+    const resolution = await resolveBaseDirInteractively(format, market, locale, defaultBaseDir);
+
+    // Kept separate from the scrolling progress log (not merged then
+    // windowed together): notes surface a bad/ignored env value, which
+    // matters regardless of how many "Loading X..." lines follow, so they
+    // must never be the ones a trailing .slice() window happens to push out.
+    const progressLog = [];
+    const onProgress = (msg) => {
+        progressLog.push(msg);
+        tui.render('API SDK CLI — loading', [...notes, ...progressLog.slice(-18)]);
     };
 
-    const log = [];
-    const onProgress = (msg) => {
-        log.push(msg);
-        tui.render('API SDK CLI — loading', log.slice(-18));
-    };
+    if (!resolution) {
+        tui.render('API SDK CLI — not loaded', [
+            ...notes,
+            'No data directory provided — skipping load.',
+            '',
+            'Press any key to continue…',
+        ]);
+        await tui.waitKey();
+        return;
+    }
+
+    const { sources } = resolution;
 
     try {
-        await sdk.load(sources, onProgress);
+        await sdk.load({ format, ...sources }, onProgress);
     } catch (ex) {
-        log.push(`FAILED: ${ex.message}`);
+        progressLog.push(`FAILED: ${ex.message}`);
     }
 
     const s = sdk.stats;
     tui.render('API SDK CLI — loaded', [
-        ...log.slice(-12),
+        ...notes,
+        ...progressLog.slice(-12),
         '',
         `${s.voyageCount} voyages · ${s.shipCount} ships · ${s.cabinGradeCount} cabin grades · ${s.portCount} ports`,
         `${s.departureCount} departures · ${s.offeringCount} cabin offerings`,
@@ -348,6 +602,11 @@ async function main() {
                     break;
             }
         }
+    } catch (ex) {
+        // The user backed out (q/esc) of a mandatory format/market/locale
+        // prompt during startup, before any menu existed to return to. Quiet
+        // exit, not a crash.
+        if (!(ex instanceof QuitRequested)) throw ex;
     } finally {
         tui.exitFullscreen();
         tui.stop();

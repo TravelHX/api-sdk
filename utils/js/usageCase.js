@@ -56,8 +56,11 @@ function show(text) {
 // paths; `sourceMarkets` is a *list*, built by: list the folder (readdirSync) ->
 // keep only the per-currency rate files (filter + regex) -> make each a full
 // path (map).
-const ref = path.join(ROOT, 'data', 'FlatFileSample', 'flatfiles_dev', 'flatfiles_dev', 'RefData');
+const ref = path.join(ROOT, 'data', 'flatfiles_dev', 'flatfiles_dev', 'RefData');
 const sources = {
+    // The SDK's load() dispatches on this discriminator (v1 | v3); the RefData
+    // sample below is the legacy v1 flat-file shape.
+    format: 'v1',
     voyages: path.join(ref, 'voyages.json'),
     ships: path.join(ref, 'ships.json'),
     cabinGrades: path.join(ref, 'cabingrades.json'),

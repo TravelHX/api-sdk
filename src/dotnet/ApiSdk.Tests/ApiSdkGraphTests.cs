@@ -54,6 +54,9 @@ public class ApiSdkGraphTests
         CabinGrades = "cabingrades.json",
         Ports = "portlist.json",
         SourceMarkets = new[] { "SourceMarket_GBP.json" },
+        // Format is now required (no compiled-in default). This suite drives the
+        // V1 (originally "dev") format.
+        Format = DataSourceFormat.V1,
     };
 
     private static Dictionary<string, string> BuildFiles() => new()

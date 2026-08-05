@@ -7,15 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.SDKCLI", "ApiSdk.SDK
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk.UsageCase", "ApiSdk.UsageCase\ApiSdk.UsageCase.csproj", "{6F8392C4-F293-474E-954F-5D8ABBF6F812}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiSdk", "..\..\src\dotnet\ApiSdk\ApiSdk.csproj", "{441A455F-C71C-4D82-A6E0-6B2240073181}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BBD45963-8A21-4443-BFA7-68E969A80F13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -26,9 +21,8 @@ Global
 		{6F8392C4-F293-474E-954F-5D8ABBF6F812}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F8392C4-F293-474E-954F-5D8ABBF6F812}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F8392C4-F293-474E-954F-5D8ABBF6F812}.Release|Any CPU.Build.0 = Release|Any CPU
-		{441A455F-C71C-4D82-A6E0-6B2240073181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{441A455F-C71C-4D82-A6E0-6B2240073181}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{441A455F-C71C-4D82-A6E0-6B2240073181}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{441A455F-C71C-4D82-A6E0-6B2240073181}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
