@@ -37,6 +37,7 @@ export class Voyage {
       day: d.day ?? null,
       location: d.location ?? null,
       heading: d.heading ?? null,
+      body: d.body ?? null,
     }));
   }
 

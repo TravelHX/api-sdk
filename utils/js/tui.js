@@ -241,18 +241,30 @@ function frame(lines) {
 export function runList({ title, items, renderItem, renderDetail, footer }) {
   let index = 0;
   let top = 0;
+  // Vertical scroll offset into the detail pane's rendered lines. A voyage's
+  // itinerary can render to hundreds of lines, far more than fit in viewH —
+  // PageUp/PageDown scroll this independently of list navigation. Always
+  // reset to 0 when the selected item changes, so switching items starts the
+  // detail view back at the top rather than carrying over a stale offset
+  // that might not even apply to the new item's (possibly much shorter)
+  // content.
+  let detailScroll = 0;
   const { cols, rows } = size();
   const listWidth = Math.max(16, Math.min(50, Math.floor(cols * 0.45)));
   const detailWidth = Math.max(0, cols - listWidth - 3);
   const viewH = Math.max(1, rows - 4);
-  const hint = footer || 'arrows/jk move · enter open · q/esc back';
+  const hint = footer || 'arrows/jk move · pgup/pgdn scroll detail · enter open · q/esc back';
 
   return new Promise((resolve) => {
     const draw = () => {
       if (index < top) top = index;
       if (index >= top + viewH) top = index - viewH + 1;
 
-      const detail = renderDetail ? renderDetail(items[index]) : [];
+      const detail = renderDetail ? renderDetail(items[index], detailWidth) : [];
+      const maxDetailScroll = Math.max(0, detail.length - viewH);
+      detailScroll = Math.min(Math.max(0, detailScroll), maxDetailScroll);
+      const hasMoreBelow = detailScroll + viewH < detail.length;
+
       const out = [];
       out.push(cyan(bold(pad(` ${title}`, cols))));
       out.push('─'.repeat(cols));
@@ -267,7 +279,15 @@ export function runList({ title, items, renderItem, renderDetail, footer }) {
         } else {
           left = ' '.repeat(listWidth);
         }
-        const right = pad(detail[r] ?? '', detailWidth);
+        const detailLine = detail[detailScroll + r] ?? '';
+        let right;
+        if (r === viewH - 1 && hasMoreBelow) {
+          const suffix = ' ↓ more';
+          const budget = Math.max(0, detailWidth - suffix.length);
+          right = pad(truncate(detailLine, budget) + dim(suffix), detailWidth);
+        } else {
+          right = pad(detailLine, detailWidth);
+        }
         out.push(`${left} ${dim('│')} ${right}`);
       }
       out.push('─'.repeat(cols));
@@ -279,21 +299,25 @@ export function runList({ title, items, renderItem, renderDetail, footer }) {
       switch (key) {
         case 'up':
           index = Math.max(0, index - 1);
+          detailScroll = 0;
           break;
         case 'down':
           index = Math.min(items.length - 1, index + 1);
+          detailScroll = 0;
           break;
         case 'pageup':
-          index = Math.max(0, index - viewH);
+          detailScroll = Math.max(0, detailScroll - viewH);
           break;
         case 'pagedown':
-          index = Math.min(items.length - 1, index + viewH);
+          detailScroll = detailScroll + viewH; // clamped against actual content length in draw()
           break;
         case 'home':
           index = 0;
+          detailScroll = 0;
           break;
         case 'end':
           index = items.length - 1;
+          detailScroll = 0;
           break;
         case 'enter':
         case 'right':

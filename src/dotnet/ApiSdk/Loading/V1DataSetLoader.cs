@@ -89,7 +89,7 @@ internal sealed class V1DataSetLoader : IDataSetLoader
                 (raw.TravelSuggestionCodes ?? new List<string?>()).Where(c => !string.IsNullOrEmpty(c)).Select(c => c!).ToList(),
                 raw.FromPort,
                 raw.ToPort,
-                (raw.Itinerary ?? new List<RawItineraryDay>()).Select(d => new ItineraryDay(d.Day, d.Location, d.Heading)).ToList());
+                (raw.Itinerary ?? new List<RawItineraryDay>()).Select(d => new ItineraryDay(d.Day, d.Location, d.Heading) { Body = d.Body }).ToList());
             voyages.Add(voyage);
 
             if (!string.IsNullOrEmpty(voyage.FromPortCode) && portByCode.TryGetValue(voyage.FromPortCode!, out var fp))

@@ -128,4 +128,5 @@ export interface ItineraryDay {
   day: string | null;
   location: string | null;
   heading: string | null;
+  body: string | null;
 }

@@ -12,6 +12,7 @@ internal sealed class RawItineraryDay
     public string? Day { get; set; }
     public string? Location { get; set; }
     public string? Heading { get; set; }
+    public string? Body { get; set; }
 }
 
 internal sealed class RawVoyage
@@ -129,4 +130,11 @@ internal sealed class RawProdVoyage
 public sealed record Price(string Currency, double? Single, double? Double);
 
 /// <summary>A read-only view of one itinerary day.</summary>
-public sealed record ItineraryDay(string? Day, string? Location, string? Heading);
+// Body is an init-only property, NOT a positional parameter, so adding it
+// doesn't change this record's constructor arity/Deconstruct signature for
+// consumers on a package version that predates it (binary/source break risk
+// for anyone pinned to this NuGet package's version).
+public sealed record ItineraryDay(string? Day, string? Location, string? Heading)
+{
+    public string? Body { get; init; }
+}

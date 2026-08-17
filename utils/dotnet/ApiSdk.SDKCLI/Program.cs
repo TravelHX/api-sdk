@@ -4,6 +4,7 @@ using ApiSdk.SDKCLI.Models;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace ApiSdk.SDKCLI;
 
@@ -52,6 +53,62 @@ internal static class Program
     }
 
     // --- text helpers -------------------------------------------------------
+
+    private static readonly Regex BlockTagRegex = new("<\\s*(p|br|div|li)[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex AnyTagRegex = new("<[^>]+>", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Itinerary <c>body</c> text is either v1 HTML (e.g.
+    /// "&lt;p&gt;&lt;b&gt;...&lt;/b&gt;&lt;/p&gt;&lt;p&gt;...&lt;/p&gt;") or v3
+    /// plain text. Normalize both into a flat list of plain-text paragraphs
+    /// for terminal display: turn block-level tags into paragraph breaks,
+    /// strip the rest of the markup, decode the small set of entities that
+    /// show up in this source data, then split into paragraphs. Mirrors the
+    /// JS CLI's <c>bodyParagraphs()</c> in <c>utils/js/SDKCLI.js</c>.
+    /// </summary>
+    private static List<string> BodyParagraphs(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return new List<string>();
+
+        var plain = BlockTagRegex.Replace(text, "\n");
+        plain = AnyTagRegex.Replace(plain, string.Empty);
+
+        // Decode the other entities BEFORE '&amp;' -- decoding '&amp;' first
+        // would turn a literal "&amp;lt;" into "&lt;" and then (on the same
+        // pass) into "<", corrupting text that legitimately contained an
+        // escaped ampersand followed by "lt;". Decoding the others first and
+        // '&amp;' last avoids that double-decode artifact.
+        plain = plain
+            .Replace("&nbsp;", " ", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#39;", "'", StringComparison.OrdinalIgnoreCase)
+            .Replace("&apos;", "'", StringComparison.OrdinalIgnoreCase)
+            .Replace("&quot;", "\"", StringComparison.OrdinalIgnoreCase)
+            .Replace("&lt;", "<", StringComparison.OrdinalIgnoreCase)
+            .Replace("&gt;", ">", StringComparison.OrdinalIgnoreCase)
+            .Replace("&amp;", "&", StringComparison.OrdinalIgnoreCase);
+
+        return plain
+            .Split('\n')
+            .Select(p => p.Trim())
+            .Where(p => p.Length > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Itinerary day numbers are free text in v1 (often already localized,
+    /// e.g. "Days 10-11", "Tag 7-14") but a bare number in v3. Only prefix
+    /// with "Day " when the value is nothing but digits/dashes/spaces --
+    /// otherwise it already reads as a day label and a prefix would double
+    /// up ("Day Day 2-3"). Mirrors the JS CLI's <c>itineraryDayLabel()</c>.
+    /// </summary>
+    private static readonly Regex NumericDayRegex = new(@"^[\d\s\-–—]+$", RegexOptions.Compiled);
+
+    private static string ItineraryDayLabel(string? day)
+    {
+        if (string.IsNullOrWhiteSpace(day)) return "Day";
+        var s = day.Trim();
+        return NumericDayRegex.IsMatch(s) ? $"Day {s}" : s;
+    }
 
     private static List<string> WrapText(string? text, int width = 76)
     {
@@ -170,16 +227,47 @@ internal static class Program
         return lines;
     }
 
-    private static List<string> VoyageDetail(Voyage voyage, string today)
+    private static List<string> VoyageDetail(Voyage voyage, string today, int width)
     {
+        // Indent prefixes below eat into the available pane width, so account for
+        // them when deriving the wrap width for each nesting level.
+        var headingWrapWidth = Math.Max(20, width - 4);  // "    " prefix
+        var bodyWrapWidth = Math.Max(20, width - 4);     // "    " prefix
+        var pointWrapWidth = Math.Max(20, width - 4);    // "  • " / "    " prefix
+
         var lines = new List<string>();
         if (!string.IsNullOrEmpty(voyage.DurationText)) lines.Add($"Duration: {voyage.DurationText}");
         lines.Add($"Upcoming departures: {voyage.UpcomingDepartures(today).Count}");
         lines.Add(string.Empty);
-        if (!string.IsNullOrEmpty(voyage.Intro))
+        if (voyage.Itinerary.Count > 0)
         {
-            lines.Add("Intro:");
-            foreach (var l in WrapText(voyage.Intro, 40)) lines.Add($"  {l}");
+            lines.Add("Itinerary:");
+            foreach (var day in voyage.Itinerary)
+            {
+                lines.Add(string.Empty);
+                var dayLabel = ItineraryDayLabel(day.Day);
+                var header = string.IsNullOrEmpty(day.Location) ? dayLabel : $"{dayLabel} — {day.Location}";
+                lines.Add($"  {header}");
+
+                if (!string.IsNullOrEmpty(day.Heading))
+                    foreach (var l in WrapText(day.Heading, headingWrapWidth)) lines.Add($"    {l}");
+
+                if (!string.IsNullOrEmpty(day.Body))
+                {
+                    var paragraphs = BodyParagraphs(day.Body);
+                    for (var i = 0; i < paragraphs.Count; i++)
+                    {
+                        if (i > 0) lines.Add(string.Empty);
+                        foreach (var l in WrapText(paragraphs[i], bodyWrapWidth)) lines.Add($"    {l}");
+                    }
+                }
+            }
+            lines.Add(string.Empty);
+        }
+        else if (!string.IsNullOrEmpty(voyage.Intro))
+        {
+            lines.Add("Itinerary:");
+            foreach (var l in WrapText(voyage.Intro, pointWrapWidth)) lines.Add($"  {l}");
             lines.Add(string.Empty);
         }
         if (voyage.SellingPoints.Count > 0)
@@ -187,7 +275,7 @@ internal static class Program
             lines.Add("Selling points:");
             foreach (var p in voyage.SellingPoints)
             {
-                var wrapped = WrapText(p, 38);
+                var wrapped = WrapText(p, pointWrapWidth);
                 if (wrapped.Count == 0) continue;
                 lines.Add($"  • {wrapped[0]}");
                 foreach (var cont in wrapped.Skip(1)) lines.Add($"    {cont}");
@@ -441,7 +529,7 @@ internal static class Program
             title: title,
             items: options,
             renderItem: (f, _) => f == DataSourceFormat.V1 ? "V1 (dev)" : "V3 (prod)",
-            renderDetail: f => f == DataSourceFormat.V1
+            renderDetail: (f, _) => f == DataSourceFormat.V1
                 ? new[]
                 {
                     "Dev flat-file format: separate ships/ports/cabin-grades/",
@@ -592,7 +680,7 @@ internal static class Program
     /// <summary>
     /// V1 ("dev") sources: ref-data files live under
     /// <c>{config.json basePath}/RefData</c> (currently
-    /// <c>data/flatfiles_dev/flatfiles_dev/RefData</c>), locale-suffixed
+    /// <c>data/flatfiles_dev/RefData</c>), locale-suffixed
     /// lowercase, plus a per-currency source-market rate file. If ANY of the
     /// files this format actually needs — voyages, ships, cabin grades, ports,
     /// the source-market rate file — aren't found there, the user is prompted
@@ -644,7 +732,7 @@ internal static class Program
     /// this today, so the prod tree is hardcoded relative to the repo/project
     /// root the same way <c>ApiSdk.UsageCase</c> hardcodes the dev path — it's
     /// the only tree of its shape in the repo. Files sit flat under
-    /// <c>data/flatfiles_prod/flatfiles_prod</c> (no <c>RefData</c> subfolder,
+    /// <c>data/flatfiles_prod</c> (no <c>RefData</c> subfolder,
     /// unlike V1), locale-suffixed UPPERCASE. There is no source-market rate
     /// file and no cabin-grade reference file in V3 — pricing is embedded per
     /// voyage and <see cref="ApiSdk.Loading.V3DataSetLoader"/> never reads
@@ -656,7 +744,7 @@ internal static class Program
     /// </summary>
     private static DataSources BuildV3Sources(Market market, string? locale)
     {
-        var prodDir = Path.GetFullPath(Path.Combine(_projectRoot, "data", "flatfiles_prod", "flatfiles_prod"));
+        var prodDir = Path.GetFullPath(Path.Combine(_projectRoot, "data", "flatfiles_prod"));
 
         MarketDataSourcesV3 marketSources;
         string ports;
@@ -705,8 +793,8 @@ internal static class Program
                 title: $"Voyages ({_sdk.Stats.VoyageCount})",
                 items: _sdk.Voyages,
                 renderItem: (v, _) => string.IsNullOrEmpty(v.Heading) ? "(no heading)" : v.Heading,
-                renderDetail: v => VoyageDetail(v, today),
-                footer: "arrows/jk move · enter departures · q back");
+                renderDetail: (v, width) => VoyageDetail(v, today, width),
+                footer: "arrows/jk move · pgup/pgdn scroll detail · enter departures · q back");
             if (vi == -1) return;
             SelectDeparture(_sdk.Voyages[vi], today);
         }
@@ -727,7 +815,7 @@ internal static class Program
                 title: voyage.Heading,
                 items: departures,
                 renderItem: (d, _) => $"{d.Date}{(string.IsNullOrEmpty(d.EndDate) ? string.Empty : $" → {d.EndDate}")}",
-                renderDetail: DepartureDetail,
+                renderDetail: (d, _) => DepartureDetail(d),
                 footer: "arrows/jk move · enter cabins · q back");
             if (di == -1) return;
 
@@ -927,7 +1015,7 @@ internal static class Program
                         title: "API SDK CLI",
                         items: Menu,
                         renderItem: (m, _) => m.Label,
-                        renderDetail: m => WrapText(m.Desc, 40),
+                        renderDetail: (m, _) => WrapText(m.Desc, 40),
                         footer: "arrows/jk move · enter select · q quit");
 
                     var item = idx == -1 ? Menu[^1] : Menu[idx];

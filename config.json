@@ -1,6 +1,6 @@
 {
   "testData": {
-    "basePath": "data/flatfiles_dev/flatfiles_dev",
+    "basePath": "data/flatfiles_dev",
     "files": [
       {
         "name": "voyages",

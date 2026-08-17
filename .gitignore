@@ -69,3 +69,6 @@ higekato-note.md
 
 # Production flatfiles (stray in-repo copy; real fixtures live outside the repo)
 data/flatfiles_prod/
+
+# Dev flatfiles (stray in-repo copy; real fixtures live outside the repo; path flattened, was data/flatfiles_dev/flatfiles_dev/)
+data/flatfiles_dev/

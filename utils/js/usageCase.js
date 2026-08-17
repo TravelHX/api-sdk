@@ -56,7 +56,22 @@ function show(text) {
 // paths; `sourceMarkets` is a *list*, built by: list the folder (readdirSync) ->
 // keep only the per-currency rate files (filter + regex) -> make each a full
 // path (map).
-const ref = path.join(ROOT, 'data', 'flatfiles_dev', 'flatfiles_dev', 'RefData');
+const ref = path.join(ROOT, 'data', 'flatfiles_dev', 'RefData');
+
+// The dev sample data is intentionally NOT committed to git (mirrors
+// data/flatfiles_prod/): real fixtures live outside the repo and are only
+// present on a machine/image that was given them out-of-band (e.g. a local
+// dev checkout, but not a bare CI clone). When they're absent there is
+// nothing wrong with the SDK -- there's just nothing to exercise it against
+// -- so skip (exit 0) rather than crash, the same posture already used for
+// the two gated tests in src/js/src/__tests__/reader.test.ts and the .NET
+// PROD_FIXTURE_DIR-gated integration test.
+if (!fs.existsSync(ref)) {
+    console.log(`SKIP: sample data missing: ${ref}`);
+    console.log('Sample data not present in this environment; nothing to verify.');
+    process.exit(0);
+}
+
 const sources = {
     // The SDK's load() dispatches on this discriminator (v1 | v3); the RefData
     // sample below is the legacy v1 flat-file shape.

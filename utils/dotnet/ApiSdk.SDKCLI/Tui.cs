@@ -137,16 +137,25 @@ public static class Tui
         string title,
         IReadOnlyList<T> items,
         Func<T, int, string>? renderItem = null,
-        Func<T, IReadOnlyList<string>>? renderDetail = null,
+        Func<T, int, IReadOnlyList<string>>? renderDetail = null,
         string? footer = null)
     {
         var index = 0;
         var top = 0;
+        // Vertical scroll offset into the detail pane's own line list — distinct
+        // from `top`, which scrolls the list on the left. Reset to 0 whenever the
+        // selected item changes so a fresh item's detail always opens at the top.
+        // Bound to PageUp/PageDown (Up/Down/Home/End remain list navigation, and
+        // detail content is usually much longer than the list — e.g. a voyage's
+        // rendered itinerary — so a page-at-a-time scroll matters more there than
+        // for the list itself, which already has single-step j/k/arrows).
+        var detailScroll = 0;
         var (cols, rows) = Size();
         var listWidth = Math.Max(16, Math.Min(50, (int)(cols * 0.45)));
         var detailWidth = Math.Max(0, cols - listWidth - 3);
         var viewH = Math.Max(1, rows - 4);
         var hint = footer ?? "arrows/jk move · enter open · q/esc back";
+        const string moreIndicator = " ↓ more";
 
         void Draw()
         {
@@ -154,8 +163,11 @@ public static class Tui
             if (index >= top + viewH) top = index - viewH + 1;
 
             var detail = renderDetail is not null && items.Count > 0
-                ? renderDetail(items[index])
+                ? renderDetail(items[index], detailWidth)
                 : Array.Empty<string>();
+
+            var maxDetailScroll = Math.Max(0, detail.Count - viewH);
+            detailScroll = Math.Clamp(detailScroll, 0, maxDetailScroll);
 
             var outLines = new List<string>
             {
@@ -179,7 +191,20 @@ public static class Tui
                     left = new string(' ', listWidth);
                 }
 
-                var right = Pad(r < detail.Count ? detail[r] : string.Empty, detailWidth);
+                var di = detailScroll + r;
+                var isLastRow = r == viewH - 1;
+                var hasMoreBelow = isLastRow && di + 1 < detail.Count;
+                string right;
+                if (hasMoreBelow && detailWidth > moreIndicator.Length)
+                {
+                    var lineText = di < detail.Count ? detail[di] : string.Empty;
+                    var truncWidth = detailWidth - moreIndicator.Length;
+                    right = Pad(lineText, truncWidth) + Dim(moreIndicator);
+                }
+                else
+                {
+                    right = Pad(di < detail.Count ? detail[di] : string.Empty, detailWidth);
+                }
                 outLines.Add($"{left} {Dim("│")} {right}");
             }
 
@@ -202,21 +227,25 @@ public static class Tui
                     return -1;
                 case Key.Up:
                     index = Math.Max(0, index - 1);
+                    detailScroll = 0;
                     break;
                 case Key.Down:
                     index = Math.Min(items.Count - 1, index + 1);
+                    detailScroll = 0;
                     break;
                 case Key.PageUp:
-                    index = Math.Max(0, index - viewH);
+                    detailScroll = Math.Max(0, detailScroll - viewH);
                     break;
                 case Key.PageDown:
-                    index = Math.Min(items.Count - 1, index + viewH);
+                    detailScroll += viewH; // clamped against actual detail length in Draw()
                     break;
                 case Key.Home:
                     index = 0;
+                    detailScroll = 0;
                     break;
                 case Key.End:
                     index = items.Count - 1;
+                    detailScroll = 0;
                     break;
                 case Key.Enter:
                 case Key.Right:

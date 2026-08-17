@@ -161,5 +161,6 @@ public class V3DataSetLoaderTests
         Assert.Single(voyage.Itinerary);
         Assert.Equal("1", voyage.Itinerary[0].Day);
         Assert.Equal("Scenic Seattle", voyage.Itinerary[0].Heading);
+        Assert.Equal("x", voyage.Itinerary[0].Body);
     }
 }

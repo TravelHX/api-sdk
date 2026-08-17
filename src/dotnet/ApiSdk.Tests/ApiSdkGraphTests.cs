@@ -77,7 +77,10 @@ public class ApiSdkGraphTests
               "intro": "an intro",
               "sellingPoints": ["point one"],
               "durationText": "6 days",
-              "travelSuggestionCodes": ["SCABC-260101", "SCABC-250101"]
+              "travelSuggestionCodes": ["SCABC-260101", "SCABC-250101"],
+              "itinerary": [
+                { "day": "Day 1", "location": "PORT A", "heading": "Arrival", "body": "<p>Welcome aboard.</p>" }
+              ]
             }]
             """,
         ["SourceMarket_GBP.json"] = """
@@ -165,5 +168,40 @@ public class ApiSdkGraphTests
         var upcoming = sdk.Voyages[0].UpcomingDepartures("2025-12-01");
 
         Assert.Equal(new[] { "SCABC-260101" }, upcoming.Select(d => d.Code));
+    }
+
+    /// <summary>
+    /// <see cref="ItineraryDay.Body"/> is an init-only property (not a positional
+    /// record parameter) specifically so adding it didn't change the record's
+    /// constructor arity/Deconstruct for consumers on an unchanged package
+    /// version. This asserts the V1 loader still wires it through end to end.
+    /// </summary>
+    [Fact]
+    public async Task V1_itinerary_day_body_is_wired_through_the_loader()
+    {
+        var sdk = await NewSdk().LoadAsync(Sources);
+
+        var day = Assert.Single(sdk.Voyages[0].Itinerary);
+        Assert.Equal("Day 1", day.Day);
+        Assert.Equal("PORT A", day.Location);
+        Assert.Equal("Arrival", day.Heading);
+        Assert.Equal("<p>Welcome aboard.</p>", day.Body);
+    }
+
+    /// <summary>
+    /// Regression guard for the record shape itself: <c>ItineraryDay</c> must
+    /// keep its 3-arity positional constructor (Day, Location, Heading) with
+    /// Body settable only via object-initializer syntax. If Body were ever
+    /// made positional again, this call site wouldn't compile.
+    /// </summary>
+    [Fact]
+    public void ItineraryDay_body_is_object_initializer_only()
+    {
+        var day = new ItineraryDay("Day 1", "PORT A", "Arrival") { Body = "text" };
+
+        Assert.Equal("Day 1", day.Day);
+        Assert.Equal("PORT A", day.Location);
+        Assert.Equal("Arrival", day.Heading);
+        Assert.Equal("text", day.Body);
     }
 }

@@ -91,7 +91,10 @@ internal sealed class V3DataSetLoader : IDataSetLoader
                 .Select(d => new ItineraryDay(
                     d.Day?.ToString(CultureInfo.InvariantCulture),
                     V3Normalization.NormalizeString(d.Location),
-                    V3Normalization.NormalizeString(d.Heading)))
+                    V3Normalization.NormalizeString(d.Heading))
+                {
+                    Body = V3Normalization.NormalizeString(d.Body),
+                })
                 .ToList();
 
             var voyage = new Voyage(
