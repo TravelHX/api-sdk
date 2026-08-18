@@ -61,21 +61,20 @@ internal static class Program
     // --- locate the real sample data ----------------------------------------
     // Walk UP from the binary's directory until the RefData folder exists, the
     // same robust approach as the test's FindDataDir — NOT a hardcoded "up 6".
-    // Note the doubled `flatfiles_dev` segment in the real layout.
     private static string FindRefDataDir()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
             var candidate = Path.Combine(
-                dir.FullName, "data", "flatfiles_dev", "flatfiles_dev", "RefData");
+                dir.FullName, "data", "flatfiles_dev", "RefData");
             if (Directory.Exists(candidate))
                 return candidate;
             dir = dir.Parent;
         }
 
-        throw new DirectoryNotFoundException(
-            "Could not locate data/flatfiles_dev/flatfiles_dev/RefData " +
+        throw new RefDataNotFoundException(
+            "Could not locate data/flatfiles_dev/RefData " +
             $"by walking up from {AppContext.BaseDirectory}");
     }
 
@@ -95,6 +94,21 @@ internal static class Program
         {
             await RunAsync();
         }
+        catch (RefDataNotFoundException ex)
+        {
+            // The dev sample data is intentionally NOT committed to git (mirrors
+            // data/flatfiles_prod/): real fixtures live outside the repo and are
+            // only present on a machine/image that was given them out-of-band
+            // (e.g. a local dev checkout, but not a bare CI clone). When they're
+            // absent there is nothing wrong with the SDK -- there's just nothing
+            // to exercise it against -- so skip (exit 0) rather than fail, the
+            // same posture already used by the two gated tests in
+            // src/js/src/__tests__/reader.test.ts and by the PROD_FIXTURE_DIR-
+            // gated V3FixtureIntegrationTests.
+            Console.WriteLine($"SKIP: {ex.Message}");
+            Console.WriteLine("Sample data not present in this environment; nothing to verify.");
+            Environment.ExitCode = 0;
+        }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"FATAL: {ex.Message}");
@@ -102,6 +116,8 @@ internal static class Program
             Environment.ExitCode = 1;
         }
     }
+
+    private sealed class RefDataNotFoundException(string message) : Exception(message);
 
     private static async Task RunAsync()
     {

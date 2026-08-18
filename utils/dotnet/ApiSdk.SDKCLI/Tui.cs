@@ -137,16 +137,25 @@ public static class Tui
         string title,
         IReadOnlyList<T> items,
         Func<T, int, string>? renderItem = null,
-        Func<T, IReadOnlyList<string>>? renderDetail = null,
+        Func<T, int, IReadOnlyList<string>>? renderDetail = null,
         string? footer = null)
     {
         var index = 0;
         var top = 0;
+        // Vertical scroll offset into the detail pane's own line list — distinct
+        // from `top`, which scrolls the list on the left. Reset to 0 whenever the
+        // selected item changes so a fresh item's detail always opens at the top.
+        // Bound to PageUp/PageDown (Up/Down/Home/End remain list navigation, and
+        // detail content is usually much longer than the list — e.g. a voyage's
+        // rendered itinerary — so a page-at-a-time scroll matters more there than
+        // for the list itself, which already has single-step j/k/arrows).
+        var detailScroll = 0;
         var (cols, rows) = Size();
         var listWidth = Math.Max(16, Math.Min(50, (int)(cols * 0.45)));
         var detailWidth = Math.Max(0, cols - listWidth - 3);
         var viewH = Math.Max(1, rows - 4);
         var hint = footer ?? "arrows/jk move · enter open · q/esc back";
+        const string moreIndicator = " ↓ more";
 
         void Draw()
         {
@@ -154,8 +163,11 @@ public static class Tui
             if (index >= top + viewH) top = index - viewH + 1;
 
             var detail = renderDetail is not null && items.Count > 0
-                ? renderDetail(items[index])
+                ? renderDetail(items[index], detailWidth)
                 : Array.Empty<string>();
+
+            var maxDetailScroll = Math.Max(0, detail.Count - viewH);
+            detailScroll = Math.Clamp(detailScroll, 0, maxDetailScroll);
 
             var outLines = new List<string>
             {
@@ -179,7 +191,20 @@ public static class Tui
                     left = new string(' ', listWidth);
                 }
 
-                var right = Pad(r < detail.Count ? detail[r] : string.Empty, detailWidth);
+                var di = detailScroll + r;
+                var isLastRow = r == viewH - 1;
+                var hasMoreBelow = isLastRow && di + 1 < detail.Count;
+                string right;
+                if (hasMoreBelow && detailWidth > moreIndicator.Length)
+                {
+                    var lineText = di < detail.Count ? detail[di] : string.Empty;
+                    var truncWidth = detailWidth - moreIndicator.Length;
+                    right = Pad(lineText, truncWidth) + Dim(moreIndicator);
+                }
+                else
+                {
+                    right = Pad(di < detail.Count ? detail[di] : string.Empty, detailWidth);
+                }
                 outLines.Add($"{left} {Dim("│")} {right}");
             }
 
@@ -202,21 +227,25 @@ public static class Tui
                     return -1;
                 case Key.Up:
                     index = Math.Max(0, index - 1);
+                    detailScroll = 0;
                     break;
                 case Key.Down:
                     index = Math.Min(items.Count - 1, index + 1);
+                    detailScroll = 0;
                     break;
                 case Key.PageUp:
-                    index = Math.Max(0, index - viewH);
+                    detailScroll = Math.Max(0, detailScroll - viewH);
                     break;
                 case Key.PageDown:
-                    index = Math.Min(items.Count - 1, index + viewH);
+                    detailScroll += viewH; // clamped against actual detail length in Draw()
                     break;
                 case Key.Home:
                     index = 0;
+                    detailScroll = 0;
                     break;
                 case Key.End:
                     index = items.Count - 1;
+                    detailScroll = 0;
                     break;
                 case Key.Enter:
                 case Key.Right:
@@ -270,6 +299,146 @@ public static class Tui
         while (true)
         {
             var key = ReadKeyMapped();
+            switch (key)
+            {
+                case Key.CtrlC:
+                    ExitFullscreen();
+                    Environment.Exit(130);
+                    return;
+                case Key.Up:
+                    topLine = Math.Max(0, topLine - 1);
+                    break;
+                case Key.Down:
+                    topLine = Math.Min(maxTop, topLine + 1);
+                    break;
+                case Key.PageUp:
+                    topLine = Math.Max(0, topLine - viewH);
+                    break;
+                case Key.PageDown:
+                    topLine = Math.Min(maxTop, topLine + viewH);
+                    break;
+                case Key.Home:
+                    topLine = 0;
+                    break;
+                case Key.End:
+                    topLine = maxTop;
+                    break;
+                case Key.Quit:
+                case Key.Escape:
+                case Key.Backspace:
+                case Key.Enter:
+                case Key.Left:
+                    return;
+                default:
+                    continue;
+            }
+            Draw();
+        }
+    }
+
+    /// <summary>
+    /// Like <see cref="RunPager(string, IReadOnlyList{string}, string?)"/>, but
+    /// for a screen whose content can change in the background — e.g. a cabin
+    /// list whose live availability figures resolve asynchronously after the
+    /// screen is already showing. <paramref name="linesProvider"/> is
+    /// re-invoked to refresh the displayed content whenever
+    /// <paramref name="hasPendingRedraw"/> reports a change is waiting (it
+    /// should atomically test-and-clear whatever "dirty" flag the caller's
+    /// background work sets, e.g. from a <c>CabinOffering.AvailabilityChanged</c>
+    /// handler).
+    ///
+    /// The only structural difference from the plain pager: instead of
+    /// blocking indefinitely on a key press, this polls
+    /// <see cref="Console.KeyAvailable"/> on a short interval so a background
+    /// redraw request is picked up promptly without a key press. This is a
+    /// one-off addition for the one screen that needs it, not a general
+    /// "reactive" rebuild of the pager — the plain <see cref="RunPager(string, IReadOnlyList{string}, string?)"/>
+    /// above is untouched and still blocks on <see cref="Console.ReadKey(bool)"/>
+    /// exactly as before for every other screen.
+    /// </summary>
+    /// <param name="stillLive">Reports whether background redraws are still
+    /// possible (e.g. any offering in view is still <c>NotFetched</c>/
+    /// <c>Loading</c>). Once it reports <c>false</c>, the tight
+    /// poll-<see cref="Console.KeyAvailable"/>-every-80ms loop stops (nothing
+    /// left to observe) and this falls back to a plain blocking key read —
+    /// same as the non-live pager — instead of spinning on an idle screen.
+    /// <c>null</c> (the default) means "always keep polling", matching the
+    /// previous unconditional behaviour.</param>
+    public static void RunPager(
+        string title,
+        Func<IReadOnlyList<string>> linesProvider,
+        Func<bool> hasPendingRedraw,
+        string? footer = null,
+        Func<bool>? stillLive = null)
+    {
+        var topLine = 0;
+        var (cols, rows) = Size();
+        var viewH = Math.Max(1, rows - 4);
+        var hint = footer ?? "arrows/jk scroll · q/esc back";
+        var lines = linesProvider();
+
+        void Draw()
+        {
+            var maxTop = Math.Max(0, lines.Count - viewH);
+            topLine = Math.Clamp(topLine, 0, maxTop);
+
+            var outLines = new List<string>
+            {
+                Cyan(Bold(Pad($" {title}", cols))),
+                new string('─', cols),
+            };
+            for (var r = 0; r < viewH; r++)
+            {
+                var i = topLine + r;
+                outLines.Add(Pad(i < lines.Count ? lines[i] : string.Empty, cols));
+            }
+            outLines.Add(new string('─', cols));
+            var pos = lines.Count > viewH
+                ? $"   [{topLine + 1}-{Math.Min(topLine + viewH, lines.Count)}/{lines.Count}]"
+                : string.Empty;
+            outLines.Add(Dim(Pad($" {hint}{pos}", cols)));
+            Frame(outLines);
+        }
+
+        Clear();
+        Draw();
+
+        while (true)
+        {
+            Key key;
+            if (stillLive is null || stillLive())
+            {
+                // Poll rather than block so a background redraw request (e.g.
+                // a live cabin availability fetch resolving) surfaces
+                // promptly instead of waiting for the next key press.
+                while (!Console.KeyAvailable)
+                {
+                    if (hasPendingRedraw())
+                    {
+                        lines = linesProvider();
+                        Draw();
+                    }
+                    Thread.Sleep(80);
+                }
+                key = ReadKeyMapped();
+            }
+            else
+            {
+                // Nothing left that could still trigger a background redraw
+                // (every offering in view has reached a terminal state) --
+                // no point burning CPU polling an idle screen every 80ms, so
+                // just block for the next key press like the plain pager.
+                // One last pending-redraw check first, in case a final
+                // change landed in the gap between the last poll tick and
+                // stillLive() flipping to false.
+                if (hasPendingRedraw())
+                {
+                    lines = linesProvider();
+                    Draw();
+                }
+                key = ReadKeyMapped();
+            }
+            var maxTop = Math.Max(0, lines.Count - viewH);
             switch (key)
             {
                 case Key.CtrlC:

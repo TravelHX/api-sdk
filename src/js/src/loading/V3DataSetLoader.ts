@@ -17,6 +17,7 @@ import type { CabinGrade } from '../data';
 import type { IFlatFileReader } from '../interfaces/IFlatFileReader';
 import type { DataSources, ProgressFn } from '../interfaces/IApiSdk';
 import type { IDataSetLoader, DataSetResult } from './IDataSetLoader';
+import type { ISwotaAvailabilityClient } from '../availability/ISwotaAvailabilityClient';
 import {
   normString,
   stripVoyageId,
@@ -44,8 +45,19 @@ import {
  *    not wired.
  *
  * Mirrors the parallel .NET V3DataSetLoader arg-for-arg.
+ *
+ * An optional {@link ISwotaAvailabilityClient} may be supplied (used by the
+ * `'swota'` format via {@link SwotaDataSetLoader}): when present, every
+ * {@link CabinOffering} built here is wired with it (plus the RAW, unstripped
+ * `VoyageID` from the source row — NOT the stripped departure code — as
+ * `voyageId`, since that is what the live SWOTA REST API requires) so
+ * `CabinOffering.getAvailableCabinsAsync()` fetches live availability instead
+ * of returning the static `maxOccupancy` placeholder. Plain `'v3'` loads
+ * construct this with no argument, so behaviour there is unchanged.
  */
 export class V3DataSetLoader implements IDataSetLoader {
+  constructor(private readonly liveClient?: ISwotaAvailabilityClient) {}
+
   async load(
     reader: IFlatFileReader,
     sources: DataSources,
@@ -111,6 +123,20 @@ export class V3DataSetLoader implements IDataSetLoader {
 
     for (const raw of voyageRows) {
       const depCode = stripVoyageId(raw.VoyageID);
+      // Raw (unstripped) VoyageID, WITHOUT stripping the "_@" prefix. The
+      // live SWOTA REST API needs this exact raw form — depCode is internal
+      // Departure identity only and must never be sent to it.
+      //
+      // Run through normString (mirrors .NET's V3Normalization.NormalizeString:
+      // trim + null-sentinel check, e.g. "NaT"/"No Mapping"/"No Market") rather
+      // than a bare `?? ''`. stripVoyageId does its own, DIFFERENT normalization
+      // (nullish -> '', "_@" prefix stripped, no trim/sentinel check), so
+      // depCode can be non-empty (e.g. a sentinel string like "NaT" has no "_@"
+      // prefix to strip, so it passes through unchanged and non-empty) while
+      // the properly-normalized rawVoyageId is empty. Without this, that row
+      // would silently send an empty voyageId to the live SWOTA REST API
+      // instead of failing fast below.
+      const rawVoyageId = normString(raw.VoyageID) ?? '';
 
       const mappedVoyage: RawVoyage = {
         heading: normString(raw.Description) ?? '',
@@ -148,6 +174,27 @@ export class V3DataSetLoader implements IDataSetLoader {
       // `continue` and the dev departureByCode pattern).
       if (depCode.length === 0 || departureByCode.has(depCode)) continue;
 
+      // Fail fast rather than silently sending an empty voyageId to the live
+      // SWOTA REST API: only reachable when a live client is wired (plain
+      // 'v3' loads never hit this, since rawVoyageId is only ever consumed
+      // below when this.liveClient is set) and depCode is non-empty (this
+      // row wasn't skipped above) but normString still normalized VoyageID
+      // to empty -- e.g. a null-sentinel VoyageID like "NaT" that
+      // stripVoyageId's cruder "_@"-prefix-only stripping doesn't catch. A
+      // request against SWOTA with an empty VoyageID would 404/error on
+      // every lookup for this voyage's offerings, silently and repeatedly,
+      // instead of failing once here with a clear cause.
+      //
+      // .NET's V3DataSetLoader.cs has the equivalent guard (same condition,
+      // same reasoning) -- both SDKs now fail fast here identically.
+      if (this.liveClient && rawVoyageId.length === 0) {
+        throw new Error(
+          `V3DataSetLoader: voyage row for departure "${depCode}" has an empty/unmapped VoyageID ` +
+            'after normalization, so no valid raw voyageId can be threaded through to the live ' +
+            'SWOTA client.'
+        );
+      }
+
       const departure = new Departure(depCode, parseDateString(raw.DepartureDate));
       // Wire ship by explicit ShipCode (prod gives it directly).
       const shipCode = normString(raw.ShipCode);
@@ -171,7 +218,13 @@ export class V3DataSetLoader implements IDataSetLoader {
           cat.MaxOccupancy === null || cat.MaxOccupancy === undefined
             ? null
             : cat.MaxOccupancy;
-        const offering = new CabinOffering(code, name, maxOccupancy);
+        const offering = new CabinOffering(
+          code,
+          name,
+          maxOccupancy,
+          this.liveClient ? rawVoyageId : undefined,
+          this.liveClient
+        );
         offering._setDeparture(departure);
         departure._addOffering(offering);
         offering._addPrice(currency, parseRate(cat.Rate_Sgl), parseRate(cat.Rate_Dbl));

@@ -56,6 +56,29 @@ function wrapText(text, width = 76) {
     return lines;
 }
 
+/**
+ * Itinerary `body` text is either v1 HTML (e.g. "<p><b>...</b></p><p>...</p>")
+ * or v3 plain text with literal "\n" paragraph breaks. Normalize both into a
+ * flat list of plain-text paragraphs for terminal display: turn block-level
+ * tags into paragraph breaks, strip the rest of the markup, decode the small
+ * set of entities that show up in this source data, then split on newlines.
+ */
+function bodyParagraphs(text) {
+    const plain = String(text)
+        .replace(/<\s*(p|br|div|li)[^>]*>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&(#39|apos);/gi, "'")
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&');
+    return plain
+        .split('\n')
+        .map((p) => p.trim())
+        .filter(Boolean);
+}
+
 function formatPrice(value) {
     const n = parseFloat(value);
     if (isNaN(n)) return null;
@@ -133,20 +156,59 @@ function runUsageSuite() {
     });
 }
 
-function voyageDetail(voyage, today) {
+/**
+ * Itinerary day numbers are free text in v1 (often already localized, e.g.
+ * "Days 10-11", "Tag 7–14") but a bare number in v3. Only prefix with "Day "
+ * when the value is nothing but digits/dashes/spaces — otherwise it already
+ * reads as a day label and a prefix would double up ("Day Day 2-3").
+ */
+function itineraryDayLabel(day) {
+    const raw = day.day;
+    if (raw === null || raw === undefined || String(raw).trim() === '') return 'Day';
+    const s = String(raw).trim();
+    return /^[\d\s\-–—]+$/.test(s) ? `Day ${s}` : s;
+}
+
+function voyageDetail(voyage, today, width = 42) {
+    // Detail pane width isn't known until runList measures the terminal, so
+    // default to the value that reproduces the old hardcoded wrap width (38)
+    // when called without one. Indent prefixes below are 4 chars wide
+    // ('    '/'  • '), hence width - 4; clamped so a very narrow pane doesn't
+    // collapse wrapText below a usable width.
+    const wrapWidth = Math.max(20, width - 4);
     const lines = [];
     if (voyage.durationText) lines.push(`Duration: ${voyage.durationText}`);
     lines.push(`Upcoming departures: ${voyage.upcomingDepartures(today).length}`);
     lines.push('');
-    if (voyage.intro) {
-        lines.push('Intro:');
-        for (const l of wrapText(voyage.intro, 40)) lines.push(`  ${l}`);
+    if (voyage.itinerary?.length) {
+        lines.push('Itinerary:');
+        for (const day of voyage.itinerary) {
+            lines.push('');
+            const header = day.location
+                ? `${itineraryDayLabel(day)} — ${day.location}`
+                : itineraryDayLabel(day);
+            lines.push(`  ${header}`);
+            if (day.heading) {
+                for (const l of wrapText(day.heading, wrapWidth)) lines.push(`    ${l}`);
+            }
+            if (day.body) {
+                const paragraphs = bodyParagraphs(day.body);
+                paragraphs.forEach((para, i) => {
+                    if (i > 0) lines.push('');
+                    for (const l of wrapText(para, wrapWidth)) lines.push(`    ${l}`);
+                });
+            }
+        }
+        lines.push('');
+    } else if (voyage.intro) {
+        lines.push('Itinerary:');
+        for (const l of wrapText(voyage.intro, wrapWidth)) lines.push(`  ${l}`);
         lines.push('');
     }
     if (voyage.sellingPoints?.length) {
         lines.push('Selling points:');
         for (const p of voyage.sellingPoints) {
-            const wrapped = wrapText(p, 38);
+            const wrapped = wrapText(p, wrapWidth);
             lines.push(`  • ${wrapped[0]}`);
             for (const cont of wrapped.slice(1)) lines.push(`    ${cont}`);
         }
@@ -162,6 +224,31 @@ function departureDetail(d) {
     if (d.endDate) lines.push(`Dates: ${d.date} → ${d.endDate}`);
     lines.push(`Cabin grades: ${d.cabinGrades.length}`);
     return lines;
+}
+
+/**
+ * Renders a cabin offering's available-cabins line against its observable
+ * {@link CabinOffering.availabilityState} (see src/js/src/data/CabinOffering.ts):
+ * 'static'/'loaded' show the known count, 'not-fetched'/'loading' show a
+ * simple text spinner while the live SWOTA fetch is (about to be) in
+ * flight, and 'failed' reports the terminal failure — never re-triggers a
+ * fetch, purely a sync read of already-known state.
+ */
+function cabinAvailabilityLine(c) {
+    switch (c.availabilityState) {
+        case 'static':
+        case 'loaded':
+            return c.lastKnownAvailableCabins !== null
+                ? `Available cabins: ${c.lastKnownAvailableCabins}`
+                : null;
+        case 'not-fetched':
+        case 'loading':
+            return 'Available cabins: loading…';
+        case 'failed':
+            return 'Available cabins: (unavailable)';
+        default:
+            return null;
+    }
 }
 
 function cabinLines(departure) {
@@ -186,9 +273,8 @@ function cabinLines(departure) {
         } else {
             lines.push('      (no cabin description available)');
         }
-        if (c.availableCabins !== undefined && c.availableCabins !== null) {
-            lines.push(`      Available cabins: ${c.availableCabins}`);
-        }
+        const availabilityLine = cabinAvailabilityLine(c);
+        if (availabilityLine) lines.push(`      ${availabilityLine}`);
         const dbl = {};
         const sgl = {};
         for (const p of c.prices) {
@@ -231,7 +317,7 @@ function tryResolve(resolver, env = process.env) {
 }
 
 function localesFor(format, market) {
-    return format === 'v3' ? MARKET_LOCALES_V3[market] : MARKET_LOCALES[market];
+    return format === 'v3' || format === 'swota' ? MARKET_LOCALES_V3[market] : MARKET_LOCALES[market];
 }
 
 /**
@@ -255,7 +341,7 @@ function requireInteractiveOrFail(envVar, reason) {
 }
 
 async function selectFormatPrompt() {
-    requireInteractiveOrFail(DATASOURCE_FORMAT_ENV, 'is not set (or not "v1"/"v3")');
+    requireInteractiveOrFail(DATASOURCE_FORMAT_ENV, 'is not set (or not "v1"/"v3"/"swota")');
     const options = [
         {
             value: 'v1',
@@ -275,12 +361,21 @@ async function selectFormatPrompt() {
                 'no separate cabin-grade reference.',
             ],
         },
+        {
+            value: 'swota',
+            label: 'SwOTA (live)',
+            desc: [
+                'Loads like v3 (same flat-file shape, data/flatfiles_prod),',
+                'but each cabin offering pulls live cabin availability from',
+                'SWOTA on first access instead of a static snapshot.',
+            ],
+        },
     ];
     const i = await tui.runList({
         title: 'Select format',
         items: options,
         renderItem: (o) => o.label,
-        renderDetail: (o) => o.desc,
+        renderDetail: (o, _width) => o.desc,
         footer: 'arrows/jk move · enter select · q quit',
     });
     if (i === -1) throw new QuitRequested();
@@ -296,7 +391,7 @@ async function selectMarketPrompt(format) {
         title: 'Select market',
         items: markets,
         renderItem: (m) => m,
-        renderDetail: (m) => [`Locales (${format}): ${localesFor(format, m).join(', ')}`],
+        renderDetail: (m, _width) => [`Locales (${format}): ${localesFor(format, m).join(', ')}`],
         footer: 'arrows/jk move · enter select · q quit',
     });
     if (i === -1) throw new QuitRequested();
@@ -327,10 +422,12 @@ async function selectLocalePrompt(market, locales) {
  * never touches cabinGrades/sourceMarkets, so those aren't checked for v3).
  */
 function buildSources(format, market, locale, baseDir) {
-    if (format === 'v3') {
-        // Prod fixtures live flat under data/flatfiles_prod/flatfiles_prod (no
-        // RefData subfolder, uppercase 2-letter country codes, no `_seaware`
-        // suffix).
+    if (format === 'v3' || format === 'swota') {
+        // Prod fixtures live flat under data/flatfiles_prod (no RefData
+        // subfolder, uppercase 2-letter country codes, no `_seaware` suffix).
+        // 'swota' loads the same v3-shaped data — its live-vs-static
+        // cabin-availability behavior is handled inside the SDK's loader,
+        // not in the paths built here.
         const { voyages, ships } = resolveMarketDataSourcesV3(market, locale, baseDir);
         const ports = path.join(baseDir, 'ports.json');
         return {
@@ -449,8 +546,8 @@ async function loadSdkData(config, sdk, projectRoot) {
     }
 
     const defaultBaseDir =
-        format === 'v3'
-            ? path.resolve(path.join(projectRoot, 'data', 'flatfiles_prod', 'flatfiles_prod'))
+        format === 'v3' || format === 'swota'
+            ? path.resolve(path.join(projectRoot, 'data', 'flatfiles_prod'))
             : path.resolve(path.join(projectRoot, config?.testData?.basePath || '', 'RefData'));
 
     const resolution = await resolveBaseDirInteractively(format, market, locale, defaultBaseDir);
@@ -512,8 +609,8 @@ async function browse(sdk) {
             title: `Voyages (${sdk.stats.voyageCount})`,
             items: sdk.voyages,
             renderItem: (v) => v.heading || '(no heading)',
-            renderDetail: (v) => voyageDetail(v, today),
-            footer: 'arrows/jk move · enter departures · q back',
+            renderDetail: (v, width) => voyageDetail(v, today, width),
+            footer: 'arrows/jk move · pgup/pgdn scroll detail · enter departures · q back',
         });
         if (vi === -1) return;
         await selectDeparture(sdk.voyages[vi], today);
@@ -531,15 +628,46 @@ async function selectDeparture(voyage, today) {
             title: voyage.heading,
             items: departures,
             renderItem: (d) => `${d.date}${d.endDate ? ` → ${d.endDate}` : ''}`,
-            renderDetail: (d) => departureDetail(d),
+            renderDetail: (d, _width) => departureDetail(d),
             footer: 'arrows/jk move · enter cabins · q back',
         });
         if (di === -1) return;
         const d = departures[di];
+
+        // 'swota' offerings that haven't been fetched yet, or that failed on
+        // a previous attempt: kick off the live lookup now (fire-and-forget
+        // — cabinLines()/cabinAvailabilityLine() read whatever's currently
+        // known, they never trigger a fetch themselves), so it's already
+        // resolving by the time the cabin screen first draws. Re-firing on
+        // 'failed' gives the retry every reopen of this screen a chance to
+        // succeed — only 'loaded' is truly terminal. 'v1'/'v3' offerings are
+        // 'static' and never hit this branch — unchanged, no spinner, no
+        // live call.
+        for (const offering of d.offerings) {
+            if (offering.availabilityState === 'not-fetched' || offering.availabilityState === 'failed') {
+                // Fire-and-forget: failures are already surfaced through the
+                // 'failed' availabilityState (cabinAvailabilityLine() renders
+                // "(unavailable)" for that state), so this catch only needs
+                // to stop the rejection from going unhandled — Node 22 kills
+                // the whole process on an unhandled promise rejection.
+                void offering.getAvailableCabinsAsync().catch(() => {});
+            }
+        }
+
         await tui.runPager({
             title: `${voyage.heading} — ${d.date}`,
-            lines: cabinLines(d),
+            // A function, not a static array: re-read on every draw so a
+            // background fetch resolving mid-view is reflected live.
+            lines: () => cabinLines(d),
             footer: 'arrows/jk scroll · q back',
+            // Redraw whenever any offering's availability state changes;
+            // runPager calls the returned unsubscribe for us the moment the
+            // user backs out, so this never leaks a listener across
+            // navigation.
+            subscribe: (redraw) => {
+                const unsubscribes = d.offerings.map((o) => o.onAvailabilityChange(redraw));
+                return () => unsubscribes.forEach((unsub) => unsub());
+            },
         });
     }
 }
@@ -572,7 +700,7 @@ async function main() {
                 title: 'API SDK CLI',
                 items: MENU,
                 renderItem: (m) => m.label,
-                renderDetail: (m) => wrapText(m.desc, 40),
+                renderDetail: (m, _width) => wrapText(m.desc, 40),
                 footer: 'arrows/jk move · enter select · q quit',
             });
             const item = idx === -1 ? MENU[MENU.length - 1] : MENU[idx];

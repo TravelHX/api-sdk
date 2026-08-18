@@ -9,6 +9,13 @@
 #   docker compose run --rm dotnet-cli    -> interactive ApiSdk.SDKCLI TUI (.NET).
 #
 # config.json and data/ are mounted read-only; they are never baked into images.
+#
+# One-time setup before running node-cli/dotnet-cli (even for plain v1/v3
+# flatfile use, not just SwOTA): `cp config.local.json.example config.local.json`
+# at the repo root. Both services unconditionally bind-mount config.local.json
+# (gitignored, real SwOTA/Auth0 creds go there) -- see the per-service comments
+# below for why the file must exist on the host before the mount, regardless of
+# DATASOURCE_FORMAT.
 
 services:
   # Fan-in build target: forces both .NET and JS test gates in one build.
@@ -33,6 +40,19 @@ services:
   # Interactive .NET SDK CLI (TUI). ApiSdk.SDKCLI treats /app as project root
   # once /app/config.json is present, then resolves data paths against it.
   # Runs via the stage ENTRYPOINT (dotnet ApiSdk.SDKCLI.dll); no command needed.
+  #
+  # config.local.json (gitignored, real SwOTA/Auth0 creds) mounts the same way
+  # as config.json: same target dir (/app), same :ro. It must already exist on
+  # the HOST for this bind mount to behave as a file mount -- on some Docker
+  # setups, bind-mounting a nonexistent host path creates an empty directory
+  # inside the container instead (on others it fails the run outright); either
+  # way it breaks this service, even for plain v1/v3 flatfile use that never
+  # touches SwOTA, since the mount is unconditional. Fix: one-time
+  # `cp config.local.json.example config.local.json` at the repo root (see
+  # top-of-file comment). The placeholder SwOTA values in the example are
+  # inert for v1/v3; replace them with real credentials (see
+  # SwOTARestConfig.cs's doc comment for field meanings) before running this
+  # service with DATASOURCE_FORMAT=swota.
   dotnet-cli:
     build:
       context: .
@@ -42,6 +62,7 @@ services:
     volumes:
       - ./data:/app/data:ro
       - ./config.json:/app/config.json:ro
+      - ./config.local.json:/app/config.local.json:ro
     stdin_open: true
     tty: true
 
@@ -58,6 +79,20 @@ services:
     command: ["node", "usageCase.js"]
 
   # Interactive SDKCLI.js TUI. getProjectRoot() returns /app -> /app/config.json.
+  #
+  # config.local.json (gitignored, real SwOTA/Auth0 creds) mounts the same way
+  # as config.json: same target dir (/app), same :ro. It must already exist on
+  # the HOST for this bind mount to behave as a file mount -- on some Docker
+  # setups, bind-mounting a nonexistent host path creates an empty directory
+  # inside the container instead (surfacing as EISDIR out of swotaConfig.ts's
+  # readJsonIfExists()); on others it fails the run outright. Either way it
+  # breaks this service, even for plain v1/v3 flatfile use that never touches
+  # SwOTA, since the mount is unconditional. Fix: one-time
+  # `cp config.local.json.example config.local.json` at the repo root (see
+  # top-of-file comment). The placeholder SwOTA values in the example are
+  # inert for v1/v3; replace them with real credentials (see
+  # SwOTARestConfig.cs's doc comment for field meanings) before running this
+  # service with DATASOURCE_FORMAT=swota.
   node-cli:
     build:
       context: .
@@ -67,6 +102,7 @@ services:
     volumes:
       - ./data:/app/data:ro
       - ./config.json:/app/config.json:ro
+      - ./config.local.json:/app/config.local.json:ro
     stdin_open: true
     tty: true
     command: ["node", "SDKCLI.js"]

@@ -11,8 +11,8 @@ import {
   DATASOURCE_LOCALE_ENV,
 } from '../loading/marketConfig';
 
-const BASE_DIR = path.join('data', 'flatfiles_dev', 'flatfiles_dev', 'RefData');
-const BASE_DIR_V3 = path.join('data', 'flatfiles_prod', 'flatfiles_prod');
+const BASE_DIR = path.join('data', 'flatfiles_dev', 'RefData');
+const BASE_DIR_V3 = path.join('data', 'flatfiles_prod');
 
 // --- resolveMarketDataSources -----------------------------------------------
 

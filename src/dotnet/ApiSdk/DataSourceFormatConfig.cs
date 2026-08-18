@@ -12,10 +12,10 @@ namespace ApiSdk;
 /// <see cref="IConfiguration"/> is supplied).</item>
 /// <item>The environment variable <c>DATASOURCE_FORMAT</c>.</item>
 /// </list>
-/// The value is parsed as the enum name ("V1" or "V3", case-insensitive). If
-/// neither source provides a value, this THROWS — there is deliberately no
-/// silent V1/V3 fallback, mirroring the removal of the hardcoded default on
-/// <see cref="DataSources.Format"/>.
+/// The value is parsed as the enum name ("V1", "V3" or "SwOTA",
+/// case-insensitive). If neither source provides a value, this THROWS — there
+/// is deliberately no silent fallback, mirroring the removal of the
+/// hardcoded default on <see cref="DataSources.Format"/>.
 /// </summary>
 public static class DataSourceFormatConfig
 {
@@ -42,13 +42,13 @@ public static class DataSourceFormatConfig
             throw new InvalidOperationException(
                 $"Data-source format is not configured. Set the '{ConfigKey}' " +
                 $"configuration key or the '{EnvVar}' environment variable to " +
-                $"'V1' or 'V3'. There is no compiled-in default.");
+                $"'V1', 'V3' or 'SwOTA'. There is no compiled-in default.");
 
         if (!TryParseEnumNameStrict<DataSourceFormat>(raw.Trim(), out var format))
         {
             throw new InvalidOperationException(
-                $"Invalid data-source format '{raw}'. Expected 'V1' or 'V3' " +
-                $"(from '{ConfigKey}' or '{EnvVar}').");
+                $"Invalid data-source format '{raw}'. Expected 'V1', 'V3' or " +
+                $"'SwOTA' (from '{ConfigKey}' or '{EnvVar}').");
         }
 
         return format;

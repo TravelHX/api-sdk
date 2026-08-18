@@ -1,3 +1,5 @@
+using ApiSdk.Availability;
+
 namespace ApiSdk;
 
 /// <summary>
@@ -7,5 +9,13 @@ namespace ApiSdk;
 /// </summary>
 public static class ApiSdkFactory
 {
-    public static IApiSdk CreateApiSdk(IFlatFileReader? reader = null) => new ApiSdk(reader);
+    /// <param name="reader">Flat-file reader; defaults to <see cref="FlatFileReader"/>.</param>
+    /// <param name="swOTAAvailabilityClient">Live-availability client used only
+    /// under <see cref="DataSourceFormat.SwOTA"/>; defaults to
+    /// <see cref="SwOTAAvailabilityClient"/>. Pass a test double here to cover
+    /// SwOTA behaviour without a real SWOTA integration.</param>
+    public static IApiSdk CreateApiSdk(
+        IFlatFileReader? reader = null,
+        ISwOTAAvailabilityClient? swOTAAvailabilityClient = null) =>
+        new ApiSdk(reader, swOTAAvailabilityClient);
 }

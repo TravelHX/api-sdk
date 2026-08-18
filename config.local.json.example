@@ -1,0 +1,21 @@
+{
+  "_comment": "One-time setup: `cp config.local.json.example config.local.json` at the repo root. config.local.json is gitignored (*.local.json) and bind-mounted into node-cli/dotnet-cli unconditionally by docker-compose.yml, so it must exist on the host -- even for plain v1/v3 (flatfile) runs that never touch SwOTA -- or the bind mount itself fails/misbehaves. Leave the placeholder SwOTA values below as-is for v1/v3; they're only read when DATASOURCE_FORMAT=swota. Replace them with real SWOTA/Auth0 credentials before running DATASOURCE_FORMAT=swota (see SwOTARestConfig.cs's doc comment for field meanings). Never commit config.local.json itself.",
+  "SwOTA": {
+    "RestBaseUrl": "https://REPLACE_ME.example.com/swota/",
+    "Auth0": {
+      "TokenUrl": "https://REPLACE_ME.auth0.com/oauth/token",
+      "ClientId": "REPLACE_ME",
+      "ClientSecret": "REPLACE_ME",
+      "Audience": "REPLACE_ME"
+    },
+    "PointOfSale": {
+      "RequestorIdType": "5",
+      "RequestorIdContext": "SEAWARE",
+      "RequestorId": "REPLACE_ME",
+      "BookingChannelType": "1",
+      "BookingChannelCompanyName": "INT-AGENT"
+    },
+    "DefaultFareCode": "BESTPRICE",
+    "DefaultGuestQty": 2
+  }
+}

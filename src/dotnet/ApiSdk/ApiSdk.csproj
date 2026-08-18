@@ -24,6 +24,21 @@
          DataSourceFormatConfig). Abstractions-only so the SDK stays light and
          the host owns the concrete configuration providers. -->
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <!-- SwOTAAvailabilityClient's parameterless constructor (the fallback
+         ApiSdk.cs uses when no live client is injected) has no host-provided
+         IConfiguration to reuse, so it builds its own straight off disk;
+         these two bring the concrete ConfigurationBuilder/AddJsonFile it
+         needs for that. Every OTHER config consumer in this SDK
+         (DataSourceFormatConfig, MarketConfig, and SwOTAAvailabilityClient's
+         DI-friendly IConfiguration constructor) stays abstractions-only; the
+         host still owns the providers in those paths. -->
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <!-- SwOTAServiceCollectionExtensions.AddSwOTAAvailabilityClient's DI
+         registration: a named AddHttpClient() for pooling, wrapped by a
+         singleton SwOTAAvailabilityClient so its Auth0 token cache is
+         actually reused across calls (see that class's doc comment). -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
   </ItemGroup>
 
 </Project>

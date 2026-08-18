@@ -241,18 +241,30 @@ function frame(lines) {
 export function runList({ title, items, renderItem, renderDetail, footer }) {
   let index = 0;
   let top = 0;
+  // Vertical scroll offset into the detail pane's rendered lines. A voyage's
+  // itinerary can render to hundreds of lines, far more than fit in viewH —
+  // PageUp/PageDown scroll this independently of list navigation. Always
+  // reset to 0 when the selected item changes, so switching items starts the
+  // detail view back at the top rather than carrying over a stale offset
+  // that might not even apply to the new item's (possibly much shorter)
+  // content.
+  let detailScroll = 0;
   const { cols, rows } = size();
   const listWidth = Math.max(16, Math.min(50, Math.floor(cols * 0.45)));
   const detailWidth = Math.max(0, cols - listWidth - 3);
   const viewH = Math.max(1, rows - 4);
-  const hint = footer || 'arrows/jk move · enter open · q/esc back';
+  const hint = footer || 'arrows/jk move · pgup/pgdn scroll detail · enter open · q/esc back';
 
   return new Promise((resolve) => {
     const draw = () => {
       if (index < top) top = index;
       if (index >= top + viewH) top = index - viewH + 1;
 
-      const detail = renderDetail ? renderDetail(items[index]) : [];
+      const detail = renderDetail ? renderDetail(items[index], detailWidth) : [];
+      const maxDetailScroll = Math.max(0, detail.length - viewH);
+      detailScroll = Math.min(Math.max(0, detailScroll), maxDetailScroll);
+      const hasMoreBelow = detailScroll + viewH < detail.length;
+
       const out = [];
       out.push(cyan(bold(pad(` ${title}`, cols))));
       out.push('─'.repeat(cols));
@@ -267,7 +279,15 @@ export function runList({ title, items, renderItem, renderDetail, footer }) {
         } else {
           left = ' '.repeat(listWidth);
         }
-        const right = pad(detail[r] ?? '', detailWidth);
+        const detailLine = detail[detailScroll + r] ?? '';
+        let right;
+        if (r === viewH - 1 && hasMoreBelow) {
+          const suffix = ' ↓ more';
+          const budget = Math.max(0, detailWidth - suffix.length);
+          right = pad(truncate(detailLine, budget) + dim(suffix), detailWidth);
+        } else {
+          right = pad(detailLine, detailWidth);
+        }
         out.push(`${left} ${dim('│')} ${right}`);
       }
       out.push('─'.repeat(cols));
@@ -279,21 +299,25 @@ export function runList({ title, items, renderItem, renderDetail, footer }) {
       switch (key) {
         case 'up':
           index = Math.max(0, index - 1);
+          detailScroll = 0;
           break;
         case 'down':
           index = Math.min(items.length - 1, index + 1);
+          detailScroll = 0;
           break;
         case 'pageup':
-          index = Math.max(0, index - viewH);
+          detailScroll = Math.max(0, detailScroll - viewH);
           break;
         case 'pagedown':
-          index = Math.min(items.length - 1, index + viewH);
+          detailScroll = detailScroll + viewH; // clamped against actual content length in draw()
           break;
         case 'home':
           index = 0;
+          detailScroll = 0;
           break;
         case 'end':
           index = items.length - 1;
+          detailScroll = 0;
           break;
         case 'enter':
         case 'right':
@@ -594,30 +618,53 @@ export function runInput({ title, label = '', initial = '', info = [], footer })
 
 /**
  * Full-screen scrollable text pager.
+ *
+ * `lines` is normally a static array, but may instead be a `() => string[]`
+ * — re-invoked on every draw — for content that can change while the pager
+ * is open (e.g. a live value resolving in the background). Pair it with
+ * `subscribe`: a `(redraw) => unsubscribe` hook, called once on mount with a
+ * function that re-reads `lines` and re-renders; its returned unsubscribe is
+ * called automatically when the pager closes, so callers never have to
+ * remember to detach the listener themselves.
+ *
  * @returns Promise<void> resolves when the user backs out.
  */
-export function runPager({ title, lines, footer }) {
+export function runPager({ title, lines, footer, subscribe }) {
   let topLine = 0;
   const { cols, rows } = size();
   const viewH = Math.max(1, rows - 4);
-  const maxTop = Math.max(0, lines.length - viewH);
   const hint = footer || 'arrows/jk scroll · q/esc back';
+  const getLines = () => (typeof lines === 'function' ? lines() : lines);
 
   return new Promise((resolve) => {
+    let unsubscribe = null;
+
     const draw = () => {
+      const currentLines = getLines();
+      const maxTop = Math.max(0, currentLines.length - viewH);
+      topLine = Math.min(topLine, maxTop);
+
       const out = [];
       out.push(cyan(bold(pad(` ${title}`, cols))));
       out.push('─'.repeat(cols));
       for (let r = 0; r < viewH; r++) {
-        out.push(pad(lines[topLine + r] ?? '', cols));
+        out.push(pad(currentLines[topLine + r] ?? '', cols));
       }
       out.push('─'.repeat(cols));
-      const pos = lines.length > viewH ? `   [${topLine + 1}-${Math.min(topLine + viewH, lines.length)}/${lines.length}]` : '';
+      const pos = currentLines.length > viewH ? `   [${topLine + 1}-${Math.min(topLine + viewH, currentLines.length)}/${currentLines.length}]` : '';
       out.push(dim(pad(` ${hint}${pos}`, cols)));
       frame(out);
     };
 
+    const finish = () => {
+      rawInputMode = false;
+      activeHandler = null;
+      if (unsubscribe) unsubscribe();
+      resolve();
+    };
+
     const onKey = (key) => {
+      const maxTop = Math.max(0, getLines().length - viewH);
       switch (key) {
         case 'up':
           topLine = Math.max(0, topLine - 1);
@@ -642,9 +689,7 @@ export function runPager({ title, lines, footer }) {
         case 'backspace':
         case 'enter':
         case 'left':
-          rawInputMode = false;
-          activeHandler = null;
-          return resolve();
+          return finish();
         default:
           return;
       }
@@ -658,6 +703,7 @@ export function runPager({ title, lines, footer }) {
     rawInputMode = false;
     activeHandler = onKey;
     draw();
+    if (subscribe) unsubscribe = subscribe(draw);
   });
 }
 

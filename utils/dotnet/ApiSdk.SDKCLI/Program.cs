@@ -1,9 +1,13 @@
 using ApiSdk;
+using ApiSdk.Availability;
 using ApiSdk.Data;
 using ApiSdk.SDKCLI.Models;
+using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net.Http;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace ApiSdk.SDKCLI;
 
@@ -17,13 +21,14 @@ internal static class Program
 {
     private static TestConfig _config = new();
     private static string _projectRoot = string.Empty;
+    private static IConfiguration _configuration = null!;
     private static global::ApiSdk.ApiSdk _sdk = null!;
     private static TestDataConfig? _selectedTestSuite;
     private static DataSourceFormat? _resolvedFormat;
     private static Market? _resolvedMarket;
     private static string? _resolvedLocale;
-    private static string? _resolvedCurrency; // null for V3 (no currency concept), not just "unresolved"
-    private static string? _resolvedBaseDir;  // the actual directory data was loaded from (V1 RefData dir or V3 prod dir)
+    private static string? _resolvedCurrency; // null for V3/SwOTA (no currency concept), not just "unresolved"
+    private static string? _resolvedBaseDir;  // the actual directory data was loaded from (V1 RefData dir or V3/SwOTA prod dir)
 
     // --- project root + config ---------------------------------------------
 
@@ -51,7 +56,82 @@ internal static class Program
         return config ?? throw new InvalidOperationException("Failed to deserialize configuration file");
     }
 
+    /// <summary>
+    /// Builds the <see cref="IConfiguration"/> this CLI passes down to
+    /// <see cref="DataSourceFormatConfig.Resolve"/> and to the
+    /// <see cref="SwOTAAvailabilityClient"/> constructed below: <c>config.json</c>
+    /// (committed, no secrets) then <c>config.local.json</c> (gitignored,
+    /// higher priority since it's added last -- holds real SWOTA/Auth0
+    /// credentials under a "SwOTA" section, see <see cref="SwOTARestConfig"/>).
+    /// Both files are optional here -- <see cref="LoadConfig"/> above is the
+    /// one that still hard-requires <c>config.json</c> for the CLI's own
+    /// testData/output settings; this is a separate, additive read of the
+    /// same directory for the DataSources/SwOTA keys only.
+    /// </summary>
+    private static IConfiguration BuildConfiguration() =>
+        new ConfigurationBuilder()
+            .SetBasePath(_projectRoot)
+            .AddJsonFile("config.json", optional: true)
+            .AddJsonFile("config.local.json", optional: true)
+            .Build();
+
     // --- text helpers -------------------------------------------------------
+
+    private static readonly Regex BlockTagRegex = new("<\\s*(p|br|div|li)[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex AnyTagRegex = new("<[^>]+>", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Itinerary <c>body</c> text is either v1 HTML (e.g.
+    /// "&lt;p&gt;&lt;b&gt;...&lt;/b&gt;&lt;/p&gt;&lt;p&gt;...&lt;/p&gt;") or v3
+    /// plain text. Normalize both into a flat list of plain-text paragraphs
+    /// for terminal display: turn block-level tags into paragraph breaks,
+    /// strip the rest of the markup, decode the small set of entities that
+    /// show up in this source data, then split into paragraphs. Mirrors the
+    /// JS CLI's <c>bodyParagraphs()</c> in <c>utils/js/SDKCLI.js</c>.
+    /// </summary>
+    private static List<string> BodyParagraphs(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return new List<string>();
+
+        var plain = BlockTagRegex.Replace(text, "\n");
+        plain = AnyTagRegex.Replace(plain, string.Empty);
+
+        // Decode the other entities BEFORE '&amp;' -- decoding '&amp;' first
+        // would turn a literal "&amp;lt;" into "&lt;" and then (on the same
+        // pass) into "<", corrupting text that legitimately contained an
+        // escaped ampersand followed by "lt;". Decoding the others first and
+        // '&amp;' last avoids that double-decode artifact.
+        plain = plain
+            .Replace("&nbsp;", " ", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#39;", "'", StringComparison.OrdinalIgnoreCase)
+            .Replace("&apos;", "'", StringComparison.OrdinalIgnoreCase)
+            .Replace("&quot;", "\"", StringComparison.OrdinalIgnoreCase)
+            .Replace("&lt;", "<", StringComparison.OrdinalIgnoreCase)
+            .Replace("&gt;", ">", StringComparison.OrdinalIgnoreCase)
+            .Replace("&amp;", "&", StringComparison.OrdinalIgnoreCase);
+
+        return plain
+            .Split('\n')
+            .Select(p => p.Trim())
+            .Where(p => p.Length > 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Itinerary day numbers are free text in v1 (often already localized,
+    /// e.g. "Days 10-11", "Tag 7-14") but a bare number in v3. Only prefix
+    /// with "Day " when the value is nothing but digits/dashes/spaces --
+    /// otherwise it already reads as a day label and a prefix would double
+    /// up ("Day Day 2-3"). Mirrors the JS CLI's <c>itineraryDayLabel()</c>.
+    /// </summary>
+    private static readonly Regex NumericDayRegex = new(@"^[\d\s\-–—]+$", RegexOptions.Compiled);
+
+    private static string ItineraryDayLabel(string? day)
+    {
+        if (string.IsNullOrWhiteSpace(day)) return "Day";
+        var s = day.Trim();
+        return NumericDayRegex.IsMatch(s) ? $"Day {s}" : s;
+    }
 
     private static List<string> WrapText(string? text, int width = 76)
     {
@@ -121,7 +201,7 @@ internal static class Program
             $"Format:                {(_resolvedFormat is { } fmt ? fmt.ToString() : "(not resolved)")}",
             $"Market:                {(_resolvedMarket is { } m ? m.ToString() : "(not resolved)")}",
             $"Locale:                {_resolvedLocale ?? "(not resolved)"}",
-            $"Currency:              {_resolvedCurrency ?? (_resolvedFormat == DataSourceFormat.V3 ? "n/a (V3 has no source-market currency)" : "(not resolved)")}",
+            $"Currency:              {_resolvedCurrency ?? (_resolvedFormat is DataSourceFormat.V3 or DataSourceFormat.SwOTA ? "n/a (V3/SwOTA have no source-market currency)" : "(not resolved)")}",
             // The directory data was ACTUALLY loaded from for the resolved
             // format (V1's RefData dir or V3's prod dir, whichever ran) — a
             // wholly different, unrelated path from "Test data path" below.
@@ -170,16 +250,47 @@ internal static class Program
         return lines;
     }
 
-    private static List<string> VoyageDetail(Voyage voyage, string today)
+    private static List<string> VoyageDetail(Voyage voyage, string today, int width)
     {
+        // Indent prefixes below eat into the available pane width, so account for
+        // them when deriving the wrap width for each nesting level.
+        var headingWrapWidth = Math.Max(20, width - 4);  // "    " prefix
+        var bodyWrapWidth = Math.Max(20, width - 4);     // "    " prefix
+        var pointWrapWidth = Math.Max(20, width - 4);    // "  • " / "    " prefix
+
         var lines = new List<string>();
         if (!string.IsNullOrEmpty(voyage.DurationText)) lines.Add($"Duration: {voyage.DurationText}");
         lines.Add($"Upcoming departures: {voyage.UpcomingDepartures(today).Count}");
         lines.Add(string.Empty);
-        if (!string.IsNullOrEmpty(voyage.Intro))
+        if (voyage.Itinerary.Count > 0)
         {
-            lines.Add("Intro:");
-            foreach (var l in WrapText(voyage.Intro, 40)) lines.Add($"  {l}");
+            lines.Add("Itinerary:");
+            foreach (var day in voyage.Itinerary)
+            {
+                lines.Add(string.Empty);
+                var dayLabel = ItineraryDayLabel(day.Day);
+                var header = string.IsNullOrEmpty(day.Location) ? dayLabel : $"{dayLabel} — {day.Location}";
+                lines.Add($"  {header}");
+
+                if (!string.IsNullOrEmpty(day.Heading))
+                    foreach (var l in WrapText(day.Heading, headingWrapWidth)) lines.Add($"    {l}");
+
+                if (!string.IsNullOrEmpty(day.Body))
+                {
+                    var paragraphs = BodyParagraphs(day.Body);
+                    for (var i = 0; i < paragraphs.Count; i++)
+                    {
+                        if (i > 0) lines.Add(string.Empty);
+                        foreach (var l in WrapText(paragraphs[i], bodyWrapWidth)) lines.Add($"    {l}");
+                    }
+                }
+            }
+            lines.Add(string.Empty);
+        }
+        else if (!string.IsNullOrEmpty(voyage.Intro))
+        {
+            lines.Add("Itinerary:");
+            foreach (var l in WrapText(voyage.Intro, pointWrapWidth)) lines.Add($"  {l}");
             lines.Add(string.Empty);
         }
         if (voyage.SellingPoints.Count > 0)
@@ -187,7 +298,7 @@ internal static class Program
             lines.Add("Selling points:");
             foreach (var p in voyage.SellingPoints)
             {
-                var wrapped = WrapText(p, 38);
+                var wrapped = WrapText(p, pointWrapWidth);
                 if (wrapped.Count == 0) continue;
                 lines.Add($"  • {wrapped[0]}");
                 foreach (var cont in wrapped.Skip(1)) lines.Add($"    {cont}");
@@ -249,8 +360,25 @@ internal static class Program
                 lines.Add("      (no cabin description available)");
             }
 
-            if (c.AvailableCabins is not null)
-                lines.Add($"      Available cabins: {c.AvailableCabins}");
+            switch (c.AvailabilityState)
+            {
+                case CabinAvailabilityState.Static:
+                    if (c.LastKnownAvailableCabins is not null)
+                        lines.Add($"      Available cabins: {c.LastKnownAvailableCabins}");
+                    break;
+                case CabinAvailabilityState.NotFetched:
+                case CabinAvailabilityState.Loading:
+                    lines.Add("      Available cabins: Loading…");
+                    break;
+                case CabinAvailabilityState.Loaded:
+                    lines.Add(c.LastKnownAvailableCabins is not null
+                        ? $"      Available cabins: {c.LastKnownAvailableCabins}"
+                        : "      Available cabins: (unknown)");
+                    break;
+                case CabinAvailabilityState.Failed:
+                    lines.Add("      Available cabins: (unavailable)");
+                    break;
+            }
 
             var dbl = new Dictionary<string, double>();
             var sgl = new Dictionary<string, double>();
@@ -264,6 +392,77 @@ internal static class Program
             lines.Add(string.Empty);
         }
         return lines;
+    }
+
+    /// <summary>
+    /// Shows the cabin pager for a departure, wiring up live SwOTA availability
+    /// for any offering that hasn't been fetched yet.
+    ///
+    /// <see cref="Tui.RunPager(string, IReadOnlyList{string}, string?)"/> blocks
+    /// on <see cref="Console.ReadKey(bool)"/> for the whole pager loop, with no
+    /// timer/poll of any kind — so there's nothing already in this TUI that a
+    /// background availability fetch could hook into to force a redraw. Rather
+    /// than teach the console to interrupt a blocking read, this uses the
+    /// small live-pager overload added alongside it
+    /// (<see cref="Tui.RunPager(string, Func{IReadOnlyList{string}}, Func{bool}, string?)"/>):
+    /// content is recomputed from <see cref="CabinLines"/> on demand, and a
+    /// single "a redraw is waiting" flag — set from
+    /// <see cref="CabinOffering.AvailabilityChanged"/>, which per its own
+    /// contract fires on whatever thread completed the fetch, i.e. off the
+    /// console/input thread — is test-and-cleared each poll tick.
+    /// <see cref="CabinOffering.GetAvailableCabinsAsync"/> is fire-and-forget
+    /// here deliberately: nothing in this screen needs the awaited result, only
+    /// the side effect of the state machine advancing and the event firing.
+    /// </summary>
+    private static void ShowCabins(Voyage voyage, Departure d)
+    {
+        var pendingRedraw = 0; // 0/1 flag, flipped with Interlocked from any thread
+
+        void OnAvailabilityChanged(CabinOffering _) => Interlocked.Exchange(ref pendingRedraw, 1);
+
+        var live = d.Offerings.Where(o => o.AvailabilityState != CabinAvailabilityState.Static).ToList();
+        foreach (var o in live)
+        {
+            o.AvailabilityChanged += OnAvailabilityChanged;
+            if (o.AvailabilityState is CabinAvailabilityState.NotFetched or CabinAvailabilityState.Failed)
+                // Fire-and-forget from this screen's perspective (nothing here
+                // awaits it -- AvailabilityState/AvailabilityChanged is how the
+                // screen learns about completion), but the Task itself must
+                // still be observed: CabinOffering.GetAvailableCabinsAsync's
+                // memoized task already funnels failures into the Failed state
+                // via ApplyTerminalTransition, so nothing needs to be DONE with
+                // the fault here -- this continuation exists purely so the
+                // discarded Task doesn't become an UnobservedTaskException on
+                // GC in some runtimes.
+                //
+                // Failed is included here (not just NotFetched) because it is
+                // NOT a terminal state for CabinOffering.GetAvailableCabinsAsync
+                // -- only Loaded is truly terminal; Failed is retryable. This is
+                // the only call site that kicks off a live fetch, so without
+                // this branch that retry capability would be unreachable.
+                o.GetAvailableCabinsAsync().ContinueWith(
+                    static t => { _ = t.Exception; },
+                    TaskContinuationOptions.OnlyOnFaulted);
+        }
+
+        try
+        {
+            Tui.RunPager(
+                title: $"{voyage.Heading} — {d.Date}",
+                linesProvider: () => CabinLines(d),
+                hasPendingRedraw: () => Interlocked.Exchange(ref pendingRedraw, 0) == 1,
+                footer: "arrows/jk scroll · q back",
+                // Once every offering in view has reached a terminal state
+                // (Loaded/Failed), nothing can trigger another background
+                // redraw -- stop the 80ms poll loop instead of spinning on
+                // an idle screen.
+                stillLive: () => live.Any(o =>
+                    o.AvailabilityState is CabinAvailabilityState.NotFetched or CabinAvailabilityState.Loading));
+        }
+        finally
+        {
+            foreach (var o in live) o.AvailabilityChanged -= OnAvailabilityChanged;
+        }
     }
 
     // --- startup load -------------------------------------------------------
@@ -328,6 +527,14 @@ internal static class Program
             {
                 DataSourceFormat.V1 => BuildV1Sources(market, locale),
                 DataSourceFormat.V3 => BuildV3Sources(market, locale),
+                // SwOTA needs the exact same path/source shape as V3 (prod
+                // ports/ships/voyages, no cabin-grade file) -- the live-vs-static
+                // cabin-availability behavior is decided inside
+                // ApiSdk.LoadAsync/V3DataSetLoader from DataSources.Format, not
+                // from which paths get built here. BuildV3Sources is told to
+                // stamp Format = SwOTA (rather than its own V3 default) so that
+                // downstream switch actually sees SwOTA and takes the live path.
+                DataSourceFormat.SwOTA => BuildV3Sources(market, locale, DataSourceFormat.SwOTA),
                 _ => throw new InvalidOperationException($"Unsupported data-source format '{format}'."),
             };
         }
@@ -411,47 +618,67 @@ internal static class Program
     /// throwing. Same "don't silently drop an explicit bad value" treatment as
     /// <see cref="ResolveOrPromptLocale"/>: <see cref="DataSourceFormatConfig.Resolve"/>
     /// throws for both "unset" and "invalid" with no way to tell which from the
-    /// exception alone, so the raw env var is peeked independently — if it was
-    /// non-blank, Resolve() must have rejected it (its only other throw case is
-    /// "unset"), and that value is surfaced in the prompt title rather than the
-    /// prompt looking identical to nothing being configured at all. (Only the
-    /// env var is peeked, not any config key, because this app never
-    /// constructs/passes an IConfiguration — env is the only source Resolve()
-    /// actually reads here.) Throws <see cref="SetupCancelledException"/> if the
-    /// user backs out of the prompt.
+    /// exception alone, so the raw config key / env var is peeked independently
+    /// — if either was non-blank, Resolve() must have rejected it (its only
+    /// other throw case is "unset"), and that value is surfaced in the prompt
+    /// title rather than the prompt looking identical to nothing being
+    /// configured at all. (<see cref="_configuration"/> is the same
+    /// config.json + config.local.json-backed <see cref="IConfiguration"/>
+    /// built by <see cref="BuildConfiguration"/> and threaded through to
+    /// <see cref="SwOTAAvailabilityClient"/> below.) Throws
+    /// <see cref="SetupCancelledException"/> if the user backs out of the prompt.
     /// </summary>
     private static DataSourceFormat ResolveOrPromptFormat()
     {
         string? invalidConfigured = null;
         try
         {
-            return DataSourceFormatConfig.Resolve();
+            return DataSourceFormatConfig.Resolve(_configuration);
         }
         catch (InvalidOperationException)
         {
+            var rawConfig = _configuration[DataSourceFormatConfig.ConfigKey];
             var rawEnv = Environment.GetEnvironmentVariable(DataSourceFormatConfig.EnvVar);
-            if (!string.IsNullOrWhiteSpace(rawEnv)) invalidConfigured = rawEnv.Trim();
+            var raw = !string.IsNullOrWhiteSpace(rawConfig) ? rawConfig : rawEnv;
+            if (!string.IsNullOrWhiteSpace(raw)) invalidConfigured = raw.Trim();
         }
 
-        var options = new[] { DataSourceFormat.V1, DataSourceFormat.V3 };
+        var options = new[] { DataSourceFormat.V1, DataSourceFormat.V3, DataSourceFormat.SwOTA };
         var title = invalidConfigured is not null
             ? $"{DataSourceFormatConfig.EnvVar} '{invalidConfigured}' is not valid — pick one:"
             : "Select format";
         var idx = Tui.RunList(
             title: title,
             items: options,
-            renderItem: (f, _) => f == DataSourceFormat.V1 ? "V1 (dev)" : "V3 (prod)",
-            renderDetail: f => f == DataSourceFormat.V1
-                ? new[]
+            renderItem: (f, _) => f switch
+            {
+                DataSourceFormat.V1 => "V1 (dev)",
+                DataSourceFormat.V3 => "V3 (prod)",
+                DataSourceFormat.SwOTA => "SwOTA (live)",
+                _ => f.ToString(),
+            },
+            renderDetail: (f, _) => f switch
+            {
+                DataSourceFormat.V1 => new[]
                 {
                     "Dev flat-file format: separate ships/ports/cabin-grades/",
                     "voyages files plus per-currency source-market rate files.",
-                }
-                : new[]
+                },
+                DataSourceFormat.V3 => new[]
                 {
                     "Prod flat-file format: pricing embedded per voyage, no",
                     "separate cabin-grade reference file.",
                 },
+                DataSourceFormat.SwOTA => new[]
+                {
+                    "Loads like V3 (prod ports/ships/voyages/cabin grades),",
+                    "but each cabin offering pulls LIVE availability from",
+                    "SWOTA on first access instead of a static snapshot —",
+                    "see CabinOffering.GetAvailableCabinsAsync. Falls back",
+                    "to V1 if the V3 source is unavailable.",
+                },
+                _ => Array.Empty<string>(),
+            },
             footer: "arrows/jk move · enter select · q/esc cancel setup");
 
         if (idx == -1) throw new SetupCancelledException();
@@ -592,7 +819,7 @@ internal static class Program
     /// <summary>
     /// V1 ("dev") sources: ref-data files live under
     /// <c>{config.json basePath}/RefData</c> (currently
-    /// <c>data/flatfiles_dev/flatfiles_dev/RefData</c>), locale-suffixed
+    /// <c>data/flatfiles_dev/RefData</c>), locale-suffixed
     /// lowercase, plus a per-currency source-market rate file. If ANY of the
     /// files this format actually needs — voyages, ships, cabin grades, ports,
     /// the source-market rate file — aren't found there, the user is prompted
@@ -644,7 +871,7 @@ internal static class Program
     /// this today, so the prod tree is hardcoded relative to the repo/project
     /// root the same way <c>ApiSdk.UsageCase</c> hardcodes the dev path — it's
     /// the only tree of its shape in the repo. Files sit flat under
-    /// <c>data/flatfiles_prod/flatfiles_prod</c> (no <c>RefData</c> subfolder,
+    /// <c>data/flatfiles_prod</c> (no <c>RefData</c> subfolder,
     /// unlike V1), locale-suffixed UPPERCASE. There is no source-market rate
     /// file and no cabin-grade reference file in V3 — pricing is embedded per
     /// voyage and <see cref="ApiSdk.Loading.V3DataSetLoader"/> never reads
@@ -654,9 +881,18 @@ internal static class Program
     /// (also unread). If voyages, ships, or ports aren't found, the user is
     /// prompted for a replacement directory, same as V1.
     /// </summary>
-    private static DataSources BuildV3Sources(Market market, string? locale)
+    /// <param name="format">
+    /// The <see cref="DataSources.Format"/> to stamp on the result -- defaults
+    /// to <see cref="DataSourceFormat.V3"/>, but <see cref="LoadSdkDataAsync"/>
+    /// passes <see cref="DataSourceFormat.SwOTA"/> here for that format: SwOTA
+    /// reads the exact same V3-shaped prod tree (nothing above this parameter
+    /// changes), it just needs the returned <see cref="DataSources"/> to say
+    /// SwOTA so <see cref="ApiSdk.ApiSdk.LoadAsync"/> takes the live-availability
+    /// branch instead of the plain V3 one.
+    /// </param>
+    private static DataSources BuildV3Sources(Market market, string? locale, DataSourceFormat format = DataSourceFormat.V3)
     {
-        var prodDir = Path.GetFullPath(Path.Combine(_projectRoot, "data", "flatfiles_prod", "flatfiles_prod"));
+        var prodDir = Path.GetFullPath(Path.Combine(_projectRoot, "data", "flatfiles_prod"));
 
         MarketDataSourcesV3 marketSources;
         string ports;
@@ -678,7 +914,7 @@ internal static class Program
 
         return new DataSources
         {
-            Format = DataSourceFormat.V3,
+            Format = format,
             Voyages = marketSources.Voyages,
             Ships = marketSources.Ships,
             CabinGrades = Path.Combine(prodDir, "unused.json"), // never read by V3DataSetLoader
@@ -705,8 +941,8 @@ internal static class Program
                 title: $"Voyages ({_sdk.Stats.VoyageCount})",
                 items: _sdk.Voyages,
                 renderItem: (v, _) => string.IsNullOrEmpty(v.Heading) ? "(no heading)" : v.Heading,
-                renderDetail: v => VoyageDetail(v, today),
-                footer: "arrows/jk move · enter departures · q back");
+                renderDetail: (v, width) => VoyageDetail(v, today, width),
+                footer: "arrows/jk move · pgup/pgdn scroll detail · enter departures · q back");
             if (vi == -1) return;
             SelectDeparture(_sdk.Voyages[vi], today);
         }
@@ -727,15 +963,12 @@ internal static class Program
                 title: voyage.Heading,
                 items: departures,
                 renderItem: (d, _) => $"{d.Date}{(string.IsNullOrEmpty(d.EndDate) ? string.Empty : $" → {d.EndDate}")}",
-                renderDetail: DepartureDetail,
+                renderDetail: (d, _) => DepartureDetail(d),
                 footer: "arrows/jk move · enter cabins · q back");
             if (di == -1) return;
 
             var d = departures[di];
-            Tui.RunPager(
-                title: $"{voyage.Heading} — {d.Date}",
-                lines: CabinLines(d),
-                footer: "arrows/jk scroll · q back");
+            ShowCabins(voyage, d);
         }
     }
 
@@ -912,7 +1145,16 @@ internal static class Program
         {
             _projectRoot = GetProjectRoot();
             _config = LoadConfig();
-            _sdk = new global::ApiSdk.ApiSdk();
+            _configuration = BuildConfiguration();
+            // Constructing the client here does not require SWOTA credentials
+            // to be configured: SwOTAAvailabilityClient(HttpClient, IConfiguration)
+            // only binds/validates the "SwOTA" section lazily, the first time
+            // GetAvailableCabinsAsync is actually called (i.e. only once a
+            // DataSourceFormat.SwOTA load reaches a live lookup) -- V1/V3 runs
+            // never touch it. HttpClient is intentionally long-lived for the
+            // process, not disposed here (short-lived CLI process).
+            var swOTAAvailabilityClient = new SwOTAAvailabilityClient(new HttpClient(), _configuration);
+            _sdk = new global::ApiSdk.ApiSdk(swOTAAvailabilityClient: swOTAAvailabilityClient);
             _selectedTestSuite = _config.TestData;
 
             Tui.EnterFullscreen();
@@ -927,7 +1169,7 @@ internal static class Program
                         title: "API SDK CLI",
                         items: Menu,
                         renderItem: (m, _) => m.Label,
-                        renderDetail: m => WrapText(m.Desc, 40),
+                        renderDetail: (m, _) => WrapText(m.Desc, 40),
                         footer: "arrows/jk move · enter select · q quit");
 
                     var item = idx == -1 ? Menu[^1] : Menu[idx];
@@ -960,6 +1202,17 @@ internal static class Program
             finally
             {
                 Tui.ExitFullscreen();
+                // _sdk itself never ends up owning a live client in this CLI:
+                // the SwOTAAvailabilityClient constructed above is always
+                // handed in explicitly, so ApiSdk.Dispose() is a no-op here.
+                // Still called for correctness/hygiene (and in case that ever
+                // changes) even though a short-lived CLI process exiting
+                // would clean up the underlying HttpClient/socket handles
+                // either way. The CLI-owned client and its HttpClient are
+                // intentionally left undisposed (see the comment where it's
+                // constructed above) -- long-lived for the whole process,
+                // torn down by process exit.
+                _sdk?.Dispose();
             }
 
             return 0;

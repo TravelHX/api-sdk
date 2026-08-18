@@ -69,3 +69,17 @@ higekato-note.md
 
 # Production flatfiles (stray in-repo copy; real fixtures live outside the repo)
 data/flatfiles_prod/
+
+# Dev flatfiles (stray in-repo copy; real fixtures live outside the repo; path flattened, was data/flatfiles_dev/flatfiles_dev/)
+data/flatfiles_dev/
+
+# Local secrets / credentials (never commit real SwOTA/Auth0 creds)
+config.local.json
+appsettings.local.json
+appsettings.*.local.json
+.env.local
+*.local.json
+
+# Claude Code agent scratch state (memory, worktrees) — not repo content,
+# and worktrees embed their own nested .git dirs that must never be staged.
+.claude/

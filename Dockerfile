@@ -111,7 +111,7 @@ RUN npm install
 COPY src/js/src/ ./src/
 # reader.test.ts reads the REAL sample data, resolving REPO_ROOT as
 # resolve(__dirname=/src/src/js/dist/__tests__, '..','..','..','..') = /src,
-# then /src/data/flatfiles_dev/flatfiles_dev/RefData. So the data tree must be present
+# then /src/data/flatfiles_dev/RefData. So the data tree must be present
 # at /src/data during the test gate. (Runtime images do NOT bake data in; it is
 # mounted there. Here it is build-time test input only.)
 COPY data/ /src/data/
@@ -150,7 +150,7 @@ FROM mcr.microsoft.com/dotnet/runtime:9.0 AS dotnet-usage
 WORKDIR /app
 
 # Published usage runner only. ApiSdk.UsageCase walks UP from AppContext.BaseDirectory
-# (/app) looking for data/flatfiles_dev/flatfiles_dev/RefData, so data/ is mounted at /app/data.
+# (/app) looking for data/flatfiles_dev/RefData, so data/ is mounted at /app/data.
 COPY --from=dotnet-test /publish/dotnet-usage/ ./
 
 ENTRYPOINT ["dotnet", "ApiSdk.UsageCase.dll"]

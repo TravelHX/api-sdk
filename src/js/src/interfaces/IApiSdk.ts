@@ -8,12 +8,16 @@ import type {
 } from '../data';
 
 /**
- * Selects which flat-file format {@link IApiSdk.load} parses. `'v1'` is the
- * original format; `'v3'` is the per-voyage-priced format. There is no default:
- * callers must choose explicitly (see {@link resolveDataSourceFormat} for the
- * env-driven resolution). Mirrors the .NET `DataSourceFormat`.
+ * Selects which data-source format {@link IApiSdk.load} uses. `'v1'` is the
+ * original flat-file format; `'v3'` is the per-voyage-priced flat-file format;
+ * `'swota'` loads the same static graph as `'v3'` (falling back to `'v1'` if
+ * the v3 flat-file source is unavailable) but wires each cabin offering to
+ * SWOTA (Seaware OTA) for live availability instead of a static snapshot. There
+ * is no default: callers must choose explicitly (see
+ * {@link resolveDataSourceFormat} for the env-driven resolution). Mirrors the
+ * .NET `DataSourceFormat`.
  */
-export type DataSourceFormat = 'v1' | 'v3';
+export type DataSourceFormat = 'v1' | 'v3' | 'swota';
 
 /**
  * Absolute paths to the flat files the SDK is loaded from.

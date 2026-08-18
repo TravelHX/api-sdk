@@ -12,8 +12,10 @@ import type { IApiSdk, DataSources, ProgressFn, SdkStats } from './interfaces/IA
 import {
   V1DataSetLoader,
   V3DataSetLoader,
+  SwotaDataSetLoader,
   type IDataSetLoader,
 } from './loading';
+import { SwotaAvailabilityClient, type ISwotaAvailabilityClient } from './availability';
 
 // Re-export the contract types so consumers can import them from the SDK root.
 export type { IApiSdk, DataSources, ProgressFn, SdkStats };
@@ -48,8 +50,21 @@ export class ApiSdk implements IApiSdk {
 
   private _loaded = false;
 
-  constructor(reader?: IFlatFileReader) {
+  private readonly _swotaAvailabilityClient?: ISwotaAvailabilityClient;
+
+  /**
+   * @param reader Flat-file reader; defaults to {@link FlatFileReader}.
+   * @param swotaAvailabilityClient Live-availability client used only under
+   *   `DataSources.format === 'swota'`; defaults to a real
+   *   {@link SwotaAvailabilityClient} (evaluated lazily in {@link load}, so a
+   *   `'v1'`/`'v3'` load — which never touches SWOTA — never constructs one).
+   *   Pass a test double / alternate implementation here to cover SwOTA
+   *   behavior without a real SWOTA integration, mirroring the .NET
+   *   `ApiSdkFactory`'s optional `swOTAAvailabilityClient` parameter.
+   */
+  constructor(reader?: IFlatFileReader, swotaAvailabilityClient?: ISwotaAvailabilityClient) {
     this._reader = reader ?? new FlatFileReader();
+    this._swotaAvailabilityClient = swotaAvailabilityClient;
   }
 
   // --- reader access / async read actions ---------------------------------
@@ -71,13 +86,20 @@ export class ApiSdk implements IApiSdk {
 
   // --- async load action ---------------------------------------------------
 
-  /** Convenience factory: construct and load in one async call. */
+  /**
+   * Convenience factory: construct and load in one async call.
+   *
+   * @param onProgress Optional progress callback forwarded to {@link load}.
+   * @param swotaAvailabilityClient Optional custom {@link ISwotaAvailabilityClient}
+   *   (see the constructor); only relevant when `sources.format === 'swota'`.
+   */
   static async create(
     sources: DataSources,
     reader?: IFlatFileReader,
-    onProgress?: ProgressFn
+    onProgress?: ProgressFn,
+    swotaAvailabilityClient?: ISwotaAvailabilityClient
   ): Promise<ApiSdk> {
-    return new ApiSdk(reader).load(sources, onProgress);
+    return new ApiSdk(reader, swotaAvailabilityClient).load(sources, onProgress);
   }
 
   /** Whether {@link load} has completed successfully. */
@@ -104,9 +126,14 @@ export class ApiSdk implements IApiSdk {
       case 'v1':
         loader = new V1DataSetLoader();
         break;
+      case 'swota':
+        loader = new SwotaDataSetLoader(
+          this._swotaAvailabilityClient ?? new SwotaAvailabilityClient()
+        );
+        break;
       default:
         throw new Error(
-          `Unrecognized DataSources.format "${String(sources.format)}". Expected "v1" or "v3".`
+          `Unrecognized DataSources.format "${String(sources.format)}". Expected "v1", "v3", or "swota".`
         );
     }
 
@@ -187,7 +214,14 @@ export class ApiSdk implements IApiSdk {
 /**
  * Factory returning the SDK behind its {@link IApiSdk} interface, so callers
  * depend on the contract rather than the concrete class.
+ *
+ * @param swotaAvailabilityClient Optional custom {@link ISwotaAvailabilityClient}
+ *   (see {@link ApiSdk}'s constructor); only relevant when loading with
+ *   `format: 'swota'`. Defaults to a real {@link SwotaAvailabilityClient}.
  */
-export function createApiSdk(reader?: IFlatFileReader): IApiSdk {
-  return new ApiSdk(reader);
+export function createApiSdk(
+  reader?: IFlatFileReader,
+  swotaAvailabilityClient?: ISwotaAvailabilityClient
+): IApiSdk {
+  return new ApiSdk(reader, swotaAvailabilityClient);
 }
