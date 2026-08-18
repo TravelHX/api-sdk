@@ -41,6 +41,11 @@ export type {
 } from './interfaces/IApiSdk';
 export type { IFlatFileReader } from './interfaces/IFlatFileReader';
 
+// Live cabin-availability client contract backing the 'swota' format (the
+// concrete SwotaAvailabilityClient is intentionally NOT exported — same
+// implementation-hiding convention as IFlatFileReader/FlatFileReader).
+export type { ISwotaAvailabilityClient } from './availability';
+
 // Read-only entity types exposed by the graph (types only — not constructable).
 export type {
   Voyage,
@@ -48,6 +53,7 @@ export type {
   Departure,
   CabinGrade,
   CabinOffering,
+  CabinAvailabilityState,
   Port,
   Price,
   ItineraryDay,

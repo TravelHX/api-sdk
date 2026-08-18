@@ -1,10 +1,15 @@
 using System.Globalization;
+using ApiSdk.Availability;
 using ApiSdk.Data;
 
 namespace ApiSdk.Loading;
 
 /// <summary>
 /// Loads the V3 (originally "prod") flat-file format into the navigable object graph.
+/// Also backs <see cref="DataSourceFormat.SwOTA"/>: everything here loads
+/// identically for both formats, the only difference being whether a
+/// <see cref="ISwOTAAvailabilityClient"/> is supplied to be wired onto each
+/// constructed <see cref="CabinOffering"/> for live availability lookups.
 ///
 /// Differences from the V1 format:
 /// <list type="bullet">
@@ -20,6 +25,17 @@ namespace ApiSdk.Loading;
 /// </summary>
 internal sealed class V3DataSetLoader : IDataSetLoader
 {
+    private readonly ISwOTAAvailabilityClient? _liveAvailabilityClient;
+
+    /// <param name="liveAvailabilityClient">When non-null (SwOTA format only),
+    /// threaded onto every constructed <see cref="CabinOffering"/> so
+    /// <see cref="CabinOffering.GetAvailableCabinsAsync"/> performs a live
+    /// lookup instead of returning the static MaxOccupancy placeholder.</param>
+    public V3DataSetLoader(ISwOTAAvailabilityClient? liveAvailabilityClient = null)
+    {
+        _liveAvailabilityClient = liveAvailabilityClient;
+    }
+
     public async Task<DataSetLoadResult> LoadAsync(
         IFlatFileReader fileReader,
         DataSources sources,
@@ -82,6 +98,7 @@ internal sealed class V3DataSetLoader : IDataSetLoader
         foreach (var raw in voyageRows)
         {
             var depCode = V3Normalization.StripVoyageId(raw.VoyageId);
+            var rawVoyageId = V3Normalization.NormalizeString(raw.VoyageId) ?? string.Empty;
 
             var heading = V3Normalization.NormalizeString(raw.Description) ?? string.Empty;
             var fromPort = V3Normalization.NormalizeString(raw.DeparturePort);
@@ -121,6 +138,24 @@ internal sealed class V3DataSetLoader : IDataSetLoader
 
             if (depCode.Length == 0 || departureByCode.ContainsKey(depCode)) continue;
 
+            // Fail fast rather than silently sending an empty voyageId to the live
+            // SWOTA REST API: only reachable when a live client is wired (plain V3
+            // loads never consume rawVoyageId below) and depCode is non-empty (this
+            // row wasn't skipped above) but NormalizeString still normalized
+            // VoyageId to empty -- e.g. a null-sentinel VoyageId like "NaT" that
+            // StripVoyageId's cruder "_@"-prefix-only stripping doesn't catch. A
+            // request against SWOTA with an empty voyageId would 404/error on
+            // every lookup for this voyage's offerings, silently and repeatedly,
+            // instead of failing once here with a clear cause. Mirrors the
+            // equivalent guard in the JS V3DataSetLoader.
+            if (_liveAvailabilityClient is not null && rawVoyageId.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    $"V3DataSetLoader: voyage row for departure \"{depCode}\" (raw VoyageID " +
+                    $"\"{raw.VoyageId}\") has an empty/unmapped VoyageID after normalization, so " +
+                    "no valid raw voyageId can be threaded through to the live SWOTA client.");
+            }
+
             var date = V3Normalization.NormalizeDate(raw.DepartureDate);
             var dep = new Departure(depCode, date);
 
@@ -144,7 +179,10 @@ internal sealed class V3DataSetLoader : IDataSetLoader
                 // V3 has no SuperCategory; reuse RateCode as the human label.
                 var name = V3Normalization.NormalizeString(cat.RateCode) ?? string.Empty;
 
-                var offering = new CabinOffering(category, name, cat.MaxOccupancy);
+                var offering = new CabinOffering(
+                    category, name, cat.MaxOccupancy,
+                    voyageId: rawVoyageId,
+                    liveAvailabilityClient: _liveAvailabilityClient);
                 offering.SetDeparture(dep);
                 dep.AddOffering(offering);
                 offering.AddPrice(

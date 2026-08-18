@@ -226,6 +226,31 @@ function departureDetail(d) {
     return lines;
 }
 
+/**
+ * Renders a cabin offering's available-cabins line against its observable
+ * {@link CabinOffering.availabilityState} (see src/js/src/data/CabinOffering.ts):
+ * 'static'/'loaded' show the known count, 'not-fetched'/'loading' show a
+ * simple text spinner while the live SWOTA fetch is (about to be) in
+ * flight, and 'failed' reports the terminal failure — never re-triggers a
+ * fetch, purely a sync read of already-known state.
+ */
+function cabinAvailabilityLine(c) {
+    switch (c.availabilityState) {
+        case 'static':
+        case 'loaded':
+            return c.lastKnownAvailableCabins !== null
+                ? `Available cabins: ${c.lastKnownAvailableCabins}`
+                : null;
+        case 'not-fetched':
+        case 'loading':
+            return 'Available cabins: loading…';
+        case 'failed':
+            return 'Available cabins: (unavailable)';
+        default:
+            return null;
+    }
+}
+
 function cabinLines(departure) {
     const ship = departure.ship;
     const cabins = [...departure.offerings].sort((a, b) => a.code.localeCompare(b.code));
@@ -248,9 +273,8 @@ function cabinLines(departure) {
         } else {
             lines.push('      (no cabin description available)');
         }
-        if (c.availableCabins !== undefined && c.availableCabins !== null) {
-            lines.push(`      Available cabins: ${c.availableCabins}`);
-        }
+        const availabilityLine = cabinAvailabilityLine(c);
+        if (availabilityLine) lines.push(`      ${availabilityLine}`);
         const dbl = {};
         const sgl = {};
         for (const p of c.prices) {
@@ -293,7 +317,7 @@ function tryResolve(resolver, env = process.env) {
 }
 
 function localesFor(format, market) {
-    return format === 'v3' ? MARKET_LOCALES_V3[market] : MARKET_LOCALES[market];
+    return format === 'v3' || format === 'swota' ? MARKET_LOCALES_V3[market] : MARKET_LOCALES[market];
 }
 
 /**
@@ -317,7 +341,7 @@ function requireInteractiveOrFail(envVar, reason) {
 }
 
 async function selectFormatPrompt() {
-    requireInteractiveOrFail(DATASOURCE_FORMAT_ENV, 'is not set (or not "v1"/"v3")');
+    requireInteractiveOrFail(DATASOURCE_FORMAT_ENV, 'is not set (or not "v1"/"v3"/"swota")');
     const options = [
         {
             value: 'v1',
@@ -335,6 +359,15 @@ async function selectFormatPrompt() {
                 'The per-voyage-priced flat-file format.',
                 'data/flatfiles_prod — pricing embedded per voyage,',
                 'no separate cabin-grade reference.',
+            ],
+        },
+        {
+            value: 'swota',
+            label: 'SwOTA (live)',
+            desc: [
+                'Loads like v3 (same flat-file shape, data/flatfiles_prod),',
+                'but each cabin offering pulls live cabin availability from',
+                'SWOTA on first access instead of a static snapshot.',
             ],
         },
     ];
@@ -389,9 +422,12 @@ async function selectLocalePrompt(market, locales) {
  * never touches cabinGrades/sourceMarkets, so those aren't checked for v3).
  */
 function buildSources(format, market, locale, baseDir) {
-    if (format === 'v3') {
+    if (format === 'v3' || format === 'swota') {
         // Prod fixtures live flat under data/flatfiles_prod (no RefData
         // subfolder, uppercase 2-letter country codes, no `_seaware` suffix).
+        // 'swota' loads the same v3-shaped data — its live-vs-static
+        // cabin-availability behavior is handled inside the SDK's loader,
+        // not in the paths built here.
         const { voyages, ships } = resolveMarketDataSourcesV3(market, locale, baseDir);
         const ports = path.join(baseDir, 'ports.json');
         return {
@@ -510,7 +546,7 @@ async function loadSdkData(config, sdk, projectRoot) {
     }
 
     const defaultBaseDir =
-        format === 'v3'
+        format === 'v3' || format === 'swota'
             ? path.resolve(path.join(projectRoot, 'data', 'flatfiles_prod'))
             : path.resolve(path.join(projectRoot, config?.testData?.basePath || '', 'RefData'));
 
@@ -597,10 +633,41 @@ async function selectDeparture(voyage, today) {
         });
         if (di === -1) return;
         const d = departures[di];
+
+        // 'swota' offerings that haven't been fetched yet, or that failed on
+        // a previous attempt: kick off the live lookup now (fire-and-forget
+        // — cabinLines()/cabinAvailabilityLine() read whatever's currently
+        // known, they never trigger a fetch themselves), so it's already
+        // resolving by the time the cabin screen first draws. Re-firing on
+        // 'failed' gives the retry every reopen of this screen a chance to
+        // succeed — only 'loaded' is truly terminal. 'v1'/'v3' offerings are
+        // 'static' and never hit this branch — unchanged, no spinner, no
+        // live call.
+        for (const offering of d.offerings) {
+            if (offering.availabilityState === 'not-fetched' || offering.availabilityState === 'failed') {
+                // Fire-and-forget: failures are already surfaced through the
+                // 'failed' availabilityState (cabinAvailabilityLine() renders
+                // "(unavailable)" for that state), so this catch only needs
+                // to stop the rejection from going unhandled — Node 22 kills
+                // the whole process on an unhandled promise rejection.
+                void offering.getAvailableCabinsAsync().catch(() => {});
+            }
+        }
+
         await tui.runPager({
             title: `${voyage.heading} — ${d.date}`,
-            lines: cabinLines(d),
+            // A function, not a static array: re-read on every draw so a
+            // background fetch resolving mid-view is reflected live.
+            lines: () => cabinLines(d),
             footer: 'arrows/jk scroll · q back',
+            // Redraw whenever any offering's availability state changes;
+            // runPager calls the returned unsubscribe for us the moment the
+            // user backs out, so this never leaks a listener across
+            // navigation.
+            subscribe: (redraw) => {
+                const unsubscribes = d.offerings.map((o) => o.onAvailabilityChange(redraw));
+                return () => unsubscribes.forEach((unsub) => unsub());
+            },
         });
     }
 }

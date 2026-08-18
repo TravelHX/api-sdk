@@ -336,6 +336,146 @@ public static class Tui
         }
     }
 
+    /// <summary>
+    /// Like <see cref="RunPager(string, IReadOnlyList{string}, string?)"/>, but
+    /// for a screen whose content can change in the background — e.g. a cabin
+    /// list whose live availability figures resolve asynchronously after the
+    /// screen is already showing. <paramref name="linesProvider"/> is
+    /// re-invoked to refresh the displayed content whenever
+    /// <paramref name="hasPendingRedraw"/> reports a change is waiting (it
+    /// should atomically test-and-clear whatever "dirty" flag the caller's
+    /// background work sets, e.g. from a <c>CabinOffering.AvailabilityChanged</c>
+    /// handler).
+    ///
+    /// The only structural difference from the plain pager: instead of
+    /// blocking indefinitely on a key press, this polls
+    /// <see cref="Console.KeyAvailable"/> on a short interval so a background
+    /// redraw request is picked up promptly without a key press. This is a
+    /// one-off addition for the one screen that needs it, not a general
+    /// "reactive" rebuild of the pager — the plain <see cref="RunPager(string, IReadOnlyList{string}, string?)"/>
+    /// above is untouched and still blocks on <see cref="Console.ReadKey(bool)"/>
+    /// exactly as before for every other screen.
+    /// </summary>
+    /// <param name="stillLive">Reports whether background redraws are still
+    /// possible (e.g. any offering in view is still <c>NotFetched</c>/
+    /// <c>Loading</c>). Once it reports <c>false</c>, the tight
+    /// poll-<see cref="Console.KeyAvailable"/>-every-80ms loop stops (nothing
+    /// left to observe) and this falls back to a plain blocking key read —
+    /// same as the non-live pager — instead of spinning on an idle screen.
+    /// <c>null</c> (the default) means "always keep polling", matching the
+    /// previous unconditional behaviour.</param>
+    public static void RunPager(
+        string title,
+        Func<IReadOnlyList<string>> linesProvider,
+        Func<bool> hasPendingRedraw,
+        string? footer = null,
+        Func<bool>? stillLive = null)
+    {
+        var topLine = 0;
+        var (cols, rows) = Size();
+        var viewH = Math.Max(1, rows - 4);
+        var hint = footer ?? "arrows/jk scroll · q/esc back";
+        var lines = linesProvider();
+
+        void Draw()
+        {
+            var maxTop = Math.Max(0, lines.Count - viewH);
+            topLine = Math.Clamp(topLine, 0, maxTop);
+
+            var outLines = new List<string>
+            {
+                Cyan(Bold(Pad($" {title}", cols))),
+                new string('─', cols),
+            };
+            for (var r = 0; r < viewH; r++)
+            {
+                var i = topLine + r;
+                outLines.Add(Pad(i < lines.Count ? lines[i] : string.Empty, cols));
+            }
+            outLines.Add(new string('─', cols));
+            var pos = lines.Count > viewH
+                ? $"   [{topLine + 1}-{Math.Min(topLine + viewH, lines.Count)}/{lines.Count}]"
+                : string.Empty;
+            outLines.Add(Dim(Pad($" {hint}{pos}", cols)));
+            Frame(outLines);
+        }
+
+        Clear();
+        Draw();
+
+        while (true)
+        {
+            Key key;
+            if (stillLive is null || stillLive())
+            {
+                // Poll rather than block so a background redraw request (e.g.
+                // a live cabin availability fetch resolving) surfaces
+                // promptly instead of waiting for the next key press.
+                while (!Console.KeyAvailable)
+                {
+                    if (hasPendingRedraw())
+                    {
+                        lines = linesProvider();
+                        Draw();
+                    }
+                    Thread.Sleep(80);
+                }
+                key = ReadKeyMapped();
+            }
+            else
+            {
+                // Nothing left that could still trigger a background redraw
+                // (every offering in view has reached a terminal state) --
+                // no point burning CPU polling an idle screen every 80ms, so
+                // just block for the next key press like the plain pager.
+                // One last pending-redraw check first, in case a final
+                // change landed in the gap between the last poll tick and
+                // stillLive() flipping to false.
+                if (hasPendingRedraw())
+                {
+                    lines = linesProvider();
+                    Draw();
+                }
+                key = ReadKeyMapped();
+            }
+            var maxTop = Math.Max(0, lines.Count - viewH);
+            switch (key)
+            {
+                case Key.CtrlC:
+                    ExitFullscreen();
+                    Environment.Exit(130);
+                    return;
+                case Key.Up:
+                    topLine = Math.Max(0, topLine - 1);
+                    break;
+                case Key.Down:
+                    topLine = Math.Min(maxTop, topLine + 1);
+                    break;
+                case Key.PageUp:
+                    topLine = Math.Max(0, topLine - viewH);
+                    break;
+                case Key.PageDown:
+                    topLine = Math.Min(maxTop, topLine + viewH);
+                    break;
+                case Key.Home:
+                    topLine = 0;
+                    break;
+                case Key.End:
+                    topLine = maxTop;
+                    break;
+                case Key.Quit:
+                case Key.Escape:
+                case Key.Backspace:
+                case Key.Enter:
+                case Key.Left:
+                    return;
+                default:
+                    continue;
+            }
+            Draw();
+        }
+    }
+
     /// <summary>Render static lines (e.g. a loading screen) without waiting for input.</summary>
     public static void Render(string title, IReadOnlyList<string> lines)
     {

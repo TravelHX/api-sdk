@@ -41,3 +41,9 @@ docs/
 
 # higekato agent scratchpad
 higekato-note.md
+
+# Local secrets (never sent to the build context; config.local.json.example
+# is a placeholder-only template and intentionally still ships)
+config.local.json
+*.local.json
+.env*

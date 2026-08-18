@@ -618,30 +618,53 @@ export function runInput({ title, label = '', initial = '', info = [], footer })
 
 /**
  * Full-screen scrollable text pager.
+ *
+ * `lines` is normally a static array, but may instead be a `() => string[]`
+ * — re-invoked on every draw — for content that can change while the pager
+ * is open (e.g. a live value resolving in the background). Pair it with
+ * `subscribe`: a `(redraw) => unsubscribe` hook, called once on mount with a
+ * function that re-reads `lines` and re-renders; its returned unsubscribe is
+ * called automatically when the pager closes, so callers never have to
+ * remember to detach the listener themselves.
+ *
  * @returns Promise<void> resolves when the user backs out.
  */
-export function runPager({ title, lines, footer }) {
+export function runPager({ title, lines, footer, subscribe }) {
   let topLine = 0;
   const { cols, rows } = size();
   const viewH = Math.max(1, rows - 4);
-  const maxTop = Math.max(0, lines.length - viewH);
   const hint = footer || 'arrows/jk scroll · q/esc back';
+  const getLines = () => (typeof lines === 'function' ? lines() : lines);
 
   return new Promise((resolve) => {
+    let unsubscribe = null;
+
     const draw = () => {
+      const currentLines = getLines();
+      const maxTop = Math.max(0, currentLines.length - viewH);
+      topLine = Math.min(topLine, maxTop);
+
       const out = [];
       out.push(cyan(bold(pad(` ${title}`, cols))));
       out.push('─'.repeat(cols));
       for (let r = 0; r < viewH; r++) {
-        out.push(pad(lines[topLine + r] ?? '', cols));
+        out.push(pad(currentLines[topLine + r] ?? '', cols));
       }
       out.push('─'.repeat(cols));
-      const pos = lines.length > viewH ? `   [${topLine + 1}-${Math.min(topLine + viewH, lines.length)}/${lines.length}]` : '';
+      const pos = currentLines.length > viewH ? `   [${topLine + 1}-${Math.min(topLine + viewH, currentLines.length)}/${currentLines.length}]` : '';
       out.push(dim(pad(` ${hint}${pos}`, cols)));
       frame(out);
     };
 
+    const finish = () => {
+      rawInputMode = false;
+      activeHandler = null;
+      if (unsubscribe) unsubscribe();
+      resolve();
+    };
+
     const onKey = (key) => {
+      const maxTop = Math.max(0, getLines().length - viewH);
       switch (key) {
         case 'up':
           topLine = Math.max(0, topLine - 1);
@@ -666,9 +689,7 @@ export function runPager({ title, lines, footer }) {
         case 'backspace':
         case 'enter':
         case 'left':
-          rawInputMode = false;
-          activeHandler = null;
-          return resolve();
+          return finish();
         default:
           return;
       }
@@ -682,6 +703,7 @@ export function runPager({ title, lines, footer }) {
     rawInputMode = false;
     activeHandler = onKey;
     draw();
+    if (subscribe) unsubscribe = subscribe(draw);
   });
 }
 
